@@ -2,7 +2,7 @@
 title: Plant-Disease-RAG-Assistant
 emoji: 🌿
 pinned: false
-short_description: RAG-powered assistant for plant disease diagnosis and guidance
+short_description: RAG-powered assistant for plant disease diagnosis & guidance
 license: mit
 tags: ["plant", "plant-disease", "plantvillage", "rag", "llm", "retrieval", "bm25", "vector-search", "streamlit", "gradio", "fastapi"]
 sdk: streamlit
@@ -52,6 +52,42 @@ docker compose up --build
 docker build -t plant-llm-assistant .
 docker run -p 7860:7860 -p 8501:8501 -v ${PWD}:/code plant-llm-assistant
 ```
+
+## 🐳 Build and Run with Docker
+
+To build the Docker image for this app, run:
+
+```bash
+docker build -t plant-disease-rag-assistant .
+```
+
+To start the app in a container:
+
+```bash
+docker run -p 8501:8501 plant-disease-rag-assistant
+```
+
+Or, if you use Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+> **Note:** To enable LLM-powered answers, set your OpenAI API key as an environment variable:
+>
+> ```bash
+> docker run -p 8501:8501 -e OPENAI_API_KEY=sk-... plant-disease-rag-assistant
+> ```
+
+## 🐳 Run the Docker Container
+
+To start the app in a Docker container, use:
+
+```bash
+docker run -p 8501:8501 plant-disease-rag-assistant
+```
+
+This will launch the Streamlit UI at [http://localhost:8501](http://localhost:8501).
 
 ## Project Structure
 
@@ -185,6 +221,27 @@ See [docs/retrieval.md](docs/retrieval.md) for building FAISS index, BM25, and h
 ## Testing
 
 See [docs/testing.md](docs/testing.md) for running tests, OpenAI integration, and debugging tips.
+
+## Supported Plants and Diseases
+
+This project supports image classification for a specific set of plants and their associated diseases. The full list is maintained in [`plant_diseases_table.csv`](plant_diseases_table.csv).
+
+### Viewing the List
+
+You can view the current list of supported plants and diseases by opening [`plant_diseases_table.csv`](plant_diseases_table.csv) in any spreadsheet or text editor. Each row corresponds to a plant, and the columns list the diseases that can be detected for that plant.
+
+### Updating the List
+
+**Do not edit the CSV manually.**  
+To regenerate or update the list, run the following script:
+
+```powershell
+python scripts/list_all_plant_diseases_covered.py
+```
+
+This will rebuild `plant_diseases_table.csv` from the latest knowledge base and classifier configuration.
+
+If you wish to expand disease coverage, update the relevant source files (e.g., `data/plantvillage_kb.json`) and then rerun the script above.
 
 ## Roadmap
 

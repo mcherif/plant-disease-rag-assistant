@@ -1,0 +1,15 @@
+Plant,Disease 1,Disease 2,Disease 3,Disease 4,Disease 5
+Apple,healthy,Apple scab,Black rot,Cedar apple rust,
+Blueberry,healthy,,,,
+Cherry (including sour),healthy,Powdery mildew,,,
+Corn (maize),healthy,Cercospora leaf spot Gray leaf spot,Common rust,Northern Leaf Blight,
+Grape,healthy,Black rot,Esca (Black Measles),Leaf blight (Isariopsis Leaf Spot),
+Orange,Haunglongbing (Citrus greening),,,,
+Peach,healthy,Bacterial spot,,,
+Potato,healthy,Early blight,Late blight,,
+Raspberry,healthy,,,,
+Soybean,healthy,,,,
+Squash,Powdery mildew,,,,
+Strawberry,healthy,Leaf scorch,,,
+Tomato,healthy,Bacterial spot,Early blight,Late blight,Leaf Mold
+,Septoria leaf spot,Spider mites Two-spotted spider mite,Target Spot,Tomato mosaic virus,Tomato Yellow Leaf Curl Virus

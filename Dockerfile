@@ -45,4 +45,5 @@ ENV INDEX_DIR=models/index/kb-faiss-bge \
     PORT_UI=8501
 
 # Default = API (compose overrides for UI)
+CMD ["streamlit", "run", "src/interface/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 CMD ["bash","-c","uvicorn src.interface.api:app --host 0.0.0.0 --port ${PORT_API}"]
