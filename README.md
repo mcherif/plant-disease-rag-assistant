@@ -197,14 +197,14 @@ python src/interface/app_gradio.py
 Below is a sample screenshot of the Plant Disease RAG Assistant in action:
 
 <p align="center">
-  <img src="data/Plant%20Disease%20RAG%20Assistant.png" alt="Sample Plant Disease RAG Assistant UI" width="700"/>
+  <img src="images/sample_screenshot_PlantDiseaseRAGAssistant.png" alt="Sample Plant Disease RAG Assistant UI" width="700"/>
 </p>
 
 **Example workflow:**
 - Upload a plant image (e.g., apple leaf).
 - View top predictions with disease names and confidence scores.
 - Enter a question or use detected plant/disease for context-aware Q&A.
-- See the LLM-generated answer, sources, and provide feedback.
+- See the LLM-generated answer, sources, and provide feedback.Sample Plant Disease RAG Assistant UI
 
 ---
 
