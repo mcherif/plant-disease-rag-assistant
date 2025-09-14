@@ -11,7 +11,7 @@ Features:
 - Replaces the previous Gradio app (see app_gradio.py, now obsolete)
 
 Usage:
-- Run via Streamlit: `streamlit run src/interface/streamlit_app.py`
+- Run via Streamlit: `streamlit run src/interface/streamlit_app.py`; you may need to set PYTHONPATH first with (# Windows PowerShell): $env:PYTHONPATH = "."
 - Configure index and API key via sidebar or environment variables
 
 Author: Mohamed Cherif / innerloopinc@gmail.com
@@ -34,6 +34,74 @@ LOGO_PATH = "images/plant-disease-rag-assistant-logo.png"
 st.set_page_config(page_title="Plant Disease RAG Assistant", layout="wide")
 st.sidebar.image(LOGO_PATH, width="stretch")
 st.title("Plant Disease RAG Assistant")
+
+def load_supported_crops():
+    # Reads the plant names from the CSV file
+    df = pd.read_csv("plant_diseases_table.csv")
+    # Find the column name for plants (case-insensitive)
+    plant_col = None
+    for col in df.columns:
+        if col.strip().lower() in ["plant", "crop", "species"]:
+            plant_col = col
+            break
+    if plant_col is None:
+        st.warning("Could not find a column for plants/crops in plant_diseases_table.csv.")
+        return []
+    return [str(x).strip() for x in df[plant_col].dropna().unique()]
+
+def plant_icon(name: str) -> str:
+    icons = {
+        "apple": "🍎",
+        "blueberry": "🫐",
+        "cherry": "🍒",
+        "corn": "🌽",
+        "grape": "🍇",
+        "orange": "🍊",
+        "peach": "🍑",
+        "potato": "🥔",
+        "raspberry": "🫐",
+        "soybean": "🌱",
+        "squash": "🥒",
+        "strawberry": "🍓",
+        "tomato": "🍅",
+    }
+    # Remove 'maize' from display name for corn
+    key = name.lower().replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip().split(" (")[0]
+    # Force single-line display for berry icons by adding a non-breaking space after the emoji
+    if key in ["blueberry", "raspberry", "strawberry"]:
+        return icons.get(key, "🪴") + "\u00A0"
+    if key == "corn":
+        return icons.get("corn", "🪴")
+    return icons.get(key, "🪴")  # Default icon
+
+def render_supported_crops(highlight: str | None = None):
+    crops = load_supported_crops()
+    st.subheader("Supported crops")
+    ncols = 13  # Display 13 plants per row
+    cols = st.columns(ncols)
+    for i, c in enumerate(crops):
+        # Clean plant name for display and icon
+        display_name = c.replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip()
+        icon = plant_icon(display_name)
+        is_hit = highlight and display_name.lower() == str(highlight).lower()
+        card_css = f"""
+            <div style="
+                padding:8px 8px;
+                border-radius:14px;
+                border:2px solid {'#22c55e' if is_hit else '#e5e7eb'};
+                background:{'#ecfdf5' if is_hit else '#ffffff'};
+                text-align:center;
+                font-weight:{'700' if is_hit else '500'};
+                margin-bottom:8px;
+                font-size:1em;
+            ">{icon} {display_name}</div>
+        """
+        with cols[i % ncols]:
+            st.markdown(card_css, unsafe_allow_html=True)
+
+# Place this immediately after st.title and before any other widget
+current_detected = st.session_state.get("detected_plant")
+render_supported_crops(current_detected)
 
 # Sidebar config (move this block up, before any function that uses MODEL_DIR)
 st.sidebar.header("Settings")
@@ -59,8 +127,9 @@ if st.sidebar.button("Show Dashboard"):
     except Exception:
         st.warning("No feedback data yet or error loading dashboard.")
 
-# ---- helpers (must be defined before use) ----
+DEBUG_MODE = st.sidebar.checkbox("Show debug info", value=False)
 
+# ---- helpers (must be defined before use) ----
 
 def _canon_plant(s: str) -> str:
     if not s:
@@ -73,7 +142,6 @@ def _canon_plant(s: str) -> str:
     }
     key = s.lower()
     return aliases.get(key, s.title())
-
 
 def _canon_disease(s: str) -> str:
     if not s:
@@ -89,7 +157,6 @@ def _canon_disease(s: str) -> str:
     }
     key = s.lower()
     return aliases.get(key, re.sub(r"\s+", " ", s).strip())
-
 
 def _infer_labels_from_classifier(raw: str):
     """
@@ -119,71 +186,69 @@ def _infer_labels_from_classifier(raw: str):
     return plant, disease or None
 # ---- helpers end ----
 
+def load_model_and_processor():
+    processor = AutoImageProcessor.from_pretrained(MODEL_DIR, use_fast=True)
+    model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
+    device = torch.device(retrieval_device)
+    model = model.to(device)
+    return model, processor, device
 
-if DEBUG_MINIMAL:
-    st.header("Plant Disease Classifier")
-    st.write("Minimal debug mode: Streamlit is working!")
-else:
-    st.caption("Upload an image to classify with the finetuned ViT model.")
+def id2label():
+    # Load mapping from class_mapping.json
+    with open("models/vit-finetuned/class_mapping.json", "r") as f:
+        class_map = json.load(f)
+    # Invert mapping: {index: class_name}
+    mapping = {v: k for k, v in class_map.items()}
+    if DEBUG_MODE:
+        st.write("[DEBUG] id2label mapping sample:", dict(list(mapping.items())[:10]))
+    return mapping
 
-    @st.cache_resource
-    def load_model_and_processor():
-        model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
-        processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
-        model_device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
-        model.eval().to(model_device)
-        return model, processor, model_device
+# ---- Supported crops section (always visible; highlights after upload) ----
 
-    @st.cache_data
-    def id2label():
-        # 1) Prefer class_mapping.json (name -> index) and invert to index -> name
-        try:
-            with open(os.path.join(MODEL_DIR, "class_mapping.json"), "r", encoding="utf-8") as f:
-                name2idx = json.load(f)
-            if isinstance(name2idx, dict) and name2idx:
-                return {int(v): k for k, v in name2idx.items()}
-        except Exception:
-            pass
-        # 2) Fallback to config.json id2label (may be LABEL_x)
-        try:
-            with open(os.path.join(MODEL_DIR, "config.json"), "r", encoding="utf-8") as f:
-                cfg = json.load(f)
-            return {int(k): v for k, v in cfg.get("id2label", {}).items()}
-        except Exception:
-            return {}
+uploaded = st.file_uploader(
+    "Upload a plant image", type=["jpg", "jpeg", "png"])
+if uploaded is not None:
+    if DEBUG_MODE:
+        st.caption(f"Filename: {uploaded.name}")
+    image = Image.open(uploaded).convert("RGB")
+    st.image(image, caption="Uploaded image", width=300)
 
-    uploaded = st.file_uploader(
-        "Upload a plant image", type=["jpg", "jpeg", "png"])
-    if uploaded is not None:
-        image = Image.open(uploaded).convert("RGB")
-        st.image(image, caption="Uploaded image", width=300)
+    with st.spinner("Loading model..."):
+        model, processor, model_device = load_model_and_processor()
+    labels = id2label()
 
-        with st.spinner("Loading model..."):
-            model, processor, model_device = load_model_and_processor()
-        labels = id2label()
+    with st.spinner("Running inference..."):
+        inputs = processor(images=image, return_tensors="pt")
+        inputs = {k: v.to(model_device) for k, v in inputs.items()}
+        with torch.no_grad():
+            logits = model(**inputs).logits
+            probs = torch.softmax(logits, dim=-1).squeeze(0).cpu()
+            topk = min(5, probs.shape[-1])
+            scores, idxs = torch.topk(probs, topk)
 
-        with st.spinner("Running inference..."):
-            inputs = processor(images=image, return_tensors="pt")
-            inputs = {k: v.to(model_device) for k, v in inputs.items()}
-            with torch.no_grad():
-                logits = model(**inputs).logits
-                probs = torch.softmax(logits, dim=-1).squeeze(0).cpu()
-                topk = min(5, probs.shape[-1])
-                scores, idxs = torch.topk(probs, topk)
+    st.subheader("Top predictions")
+    for score, idx in zip(scores.tolist(), idxs.tolist()):
+        if DEBUG_MODE:
+            st.write(f"[DEBUG] idx={idx}, type={type(idx)}, label_name={labels.get(idx)}")
+        label_name = labels.get(idx, f"LABEL_{idx}")
+        plant, disease = _infer_labels_from_classifier(label_name)
+        if disease:
+            st.write(f"- {label_name}: {score:.3f} ({disease})")
+        else:
+            st.write(f"- {label_name}: {score:.3f}")
 
-        st.subheader("Top predictions")
-        for score, idx in zip(scores.tolist(), idxs.tolist()):
-            label = labels.get(idx, f"class_{idx}")
-            st.write(f"- {label}: {score:.3f}")
-
-        # Take top-1 as detected labels and store to session
-        top1_label = labels.get(int(idxs[0]), f"class_{int(idxs[0])}")
-        plant_guess, disease_guess = _infer_labels_from_classifier(top1_label)
-        st.session_state["detected_plant"] = plant_guess or st.session_state.get(
-            "detected_plant")
-        st.session_state["detected_disease"] = disease_guess or st.session_state.get(
-            "detected_disease")
+    # Take top-1 as detected labels and store to session
+    top1_label = labels.get(int(idxs[0]), f"class_{int(idxs[0])}")
+    plant_guess, disease_guess = _infer_labels_from_classifier(top1_label)
+    if (
+        st.session_state.get("detected_plant") != plant_guess
+        or st.session_state.get("detected_disease") != disease_guess
+    ):
+        st.session_state["detected_plant"] = plant_guess
+        st.session_state["detected_disease"] = disease_guess
+        st.session_state["force_rerun"] = not st.session_state.get("force_rerun", False)
+        st.rerun()
+        st.stop()  # Prevent further code from running in this pass
 
 # RAG pipeline (re-init when settings change)
 cfg = RetrievalConfig(index_dir=index_dir, top_k=top_k,
