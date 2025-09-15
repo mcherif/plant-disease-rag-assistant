@@ -74,6 +74,9 @@ def plant_icon(name: str) -> str:
         return icons.get("corn", "🪴")
     return icons.get(key, "🪴")  # Default icon
 
+def normalize_plant_name(name):
+    return name.lower().replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip()
+
 def render_supported_crops(highlight: str | None = None):
     crops = load_supported_crops()
     st.subheader("Supported crops")
@@ -83,7 +86,7 @@ def render_supported_crops(highlight: str | None = None):
         # Clean plant name for display and icon
         display_name = c.replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip()
         icon = plant_icon(display_name)
-        is_hit = highlight and display_name.lower() == str(highlight).lower()
+        is_hit = highlight and normalize_plant_name(display_name) == normalize_plant_name(str(highlight))
         card_css = f"""
             <div style="
                 padding:8px 8px;
@@ -116,16 +119,17 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     st.warning("OPENAI_API_KEY not set. Answers won’t work.", icon="⚠️")
 
-if st.sidebar.button("Show Dashboard"):
+show_dashboard = st.sidebar.checkbox("Show Dashboard")
+if show_dashboard:
     st.header("Feedback Dashboard")
     try:
         df = pd.read_json("data/feedback/feedback.jsonl", lines=True)
-        st.bar_chart(df["feedback"].value_counts())
-        st.line_chart(df.groupby("timestamp").size())
+        st.bar_chart(df["satisfaction"].value_counts())
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        st.line_chart(df.groupby(df["timestamp"].dt.date).size())
         st.write("Recent feedback:", df.tail(10))
-        # Add more charts as needed (latency, retrieval count, etc.)
-    except Exception:
-        st.warning("No feedback data yet or error loading dashboard.")
+    except Exception as e:
+        st.warning(f"No feedback data yet or error loading dashboard: {e}")
 
 DEBUG_MODE = st.sidebar.checkbox("Show debug info", value=False)
 
@@ -147,6 +151,9 @@ def _canon_disease(s: str) -> str:
     if not s:
         return s
     s = s.strip()
+    # Remove parenthetical qualifiers like (maize)
+    s = re.sub(r"\(.*?\)", "", s)
+    s = s.replace("  ", " ").strip()
     aliases = {
         # common classifier labels -> KB names
         "peach bacterial": "Bacterial spot",
@@ -154,6 +161,7 @@ def _canon_disease(s: str) -> str:
         "powdery mildew": "Powdery mildew",
         "northern leaf blight": "Northern Leaf Blight",
         "gray leaf spot": "Cercospora leaf spot Gray leaf spot",
+        "common rust": "Common rust",
     }
     key = s.lower()
     return aliases.get(key, re.sub(r"\s+", " ", s).strip())
