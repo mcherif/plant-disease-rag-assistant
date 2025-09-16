@@ -27,6 +27,7 @@ Example:
 """
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
@@ -34,6 +35,7 @@ from typing import Dict, List, Set, Tuple
 import faiss  # type: ignore
 import numpy as np
 from rank_bm25 import BM25Okapi
+import warnings
 from sentence_transformers import SentenceTransformer
 
 
@@ -75,22 +77,52 @@ def _tok(s: str) -> List[str]:
     return re.findall(r"\w+", str(s).lower())
 
 
-def _embed_query(text: str, model_name: str, device: str = "cpu") -> np.ndarray:
+def _embed_query(
+    text: str,
+    model_name: str,
+    device: str = "cpu",
+    encoder: SentenceTransformer | None = None,
+) -> np.ndarray:
     """Encode a single query into a normalized embedding for cosine similarity.
 
     Args:
         text: query text (already prefixed if required by the model family).
         model_name: SentenceTransformers model or HF hub ID used at indexing.
         device: "cpu" or "cuda".
+        encoder: optional pre-loaded SentenceTransformer instance to reuse.
 
     Returns:
         np.ndarray: shape (1, dim) float32, L2-normalized.
     """
-    m = SentenceTransformer(model_name, device=device)
-    v = m.encode([text], convert_to_numpy=True,
-                 normalize_embeddings=False).astype("float32")
+    model = encoder or SentenceTransformer(model_name, device=device)
+    v = model.encode([text], convert_to_numpy=True,
+                     normalize_embeddings=False).astype("float32")
     v /= (np.linalg.norm(v, axis=1, keepdims=True) + 1e-12)
     return v
+
+def _build_fallback_index(meta: List[Dict], encoder: SentenceTransformer, doc_prefix: str) -> faiss.Index:
+    """Rebuild a simple inner-product FAISS index when the persisted file is incompatible."""
+    docs: List[str] = []
+    prefix = doc_prefix or ""
+    for row in meta:
+        text = row.get("text") or ""
+        docs.append(f"{prefix}{text}" if prefix else text)
+
+    if not docs:
+        dim = encoder.get_sentence_embedding_dimension()
+        return faiss.IndexFlatIP(dim)
+
+    embeddings = encoder.encode(
+        docs,
+        batch_size=min(64, len(docs)),
+        convert_to_numpy=True,
+        normalize_embeddings=False,
+    ).astype("float32")
+    embeddings /= (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-12)
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatIP(dim)
+    index.add(embeddings)
+    return index
 
 
 def _infer_query_prefix(cfg: Dict, given: str) -> str:
@@ -237,15 +269,28 @@ def main() -> int:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    index = faiss.read_index(str(index_dir / "faiss.index"))
     cfg = load_config(index_dir)
     meta = load_meta(index_dir)
+    model_name = args.model or cfg.get(
+        "model", "sentence-transformers/all-MiniLM-L6-v2")
+    encoder_model = SentenceTransformer(model_name, device=args.device)
+
+    allow_fallback = os.getenv("RAG_ALLOW_FAISS_FALLBACK", "1").lower() not in {"0", "false"}
+    try:
+        index = faiss.read_index(str(index_dir / "faiss.index"))
+    except RuntimeError as err:
+        if not allow_fallback:
+            raise
+        warnings.warn(
+            f"[eval] Failed to load FAISS index '{index_dir / 'faiss.index'}'; rebuilding at runtime: {err}",
+            RuntimeWarning,
+        )
+        index = _build_fallback_index(meta, encoder_model, str(cfg.get("doc_prefix", "")))
+
     if index.ntotal != len(meta):
         raise RuntimeError(
             f"Index size {index.ntotal} != meta rows {len(meta)}")
 
-    model_name = args.model or cfg.get(
-        "model", "sentence-transformers/all-MiniLM-L6-v2")
     q_prefix = _infer_query_prefix(cfg, args.query_prefix)
     top_ks = [int(x) for x in args.top_ks.split(",") if x.strip()]
 
@@ -261,7 +306,7 @@ def main() -> int:
             plant = str(lbl.get("plant", "")).strip() or None
 
             q = _embed_query(f"{q_prefix}{query}" if q_prefix else query,
-                             model_name=model_name, device=args.device)
+                             model_name=model_name, device=args.device, encoder=encoder_model)
             vec_scores, vec_idxs = index.search(
                 q, max(args.pretopk, max(top_ks)))
             vec_scores, vec_idxs = vec_scores[0], vec_idxs[0]

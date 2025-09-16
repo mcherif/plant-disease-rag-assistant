@@ -116,6 +116,8 @@ def health():
     meta_count = getattr(p, "meta", None)
     if isinstance(meta_count, list):
         meta_count = len(meta_count)
+    fallback = bool(getattr(p, "_faiss_fallback", False))
+    reason = getattr(p, "_faiss_fallback_reason", None) if fallback else None
     return {
         "status": "ok",
         "index_dir": INDEX_DIR,
@@ -123,6 +125,8 @@ def health():
         "default_top_k": DEFAULT_TOP_K,
         "meta_docs": meta_count,
         "model_env": os.getenv("OPENAI_MODEL"),
+        "faiss_fallback": fallback,
+        "faiss_fallback_reason": reason,
     }
 
 
@@ -263,7 +267,7 @@ async def classify_image(file: UploadFile = File(...)):
 
 @app.post("/api/feedback")
 async def submit_feedback(feedback: FeedbackRequest):
-    feedback_data = feedback.dict()
+    feedback_data = feedback.model_dump()
     if not feedback_data.get("timestamp"):
         feedback_data["timestamp"] = datetime.utcnow().isoformat()
     feedback_dir = "data/feedback"

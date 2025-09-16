@@ -76,6 +76,7 @@ import json
 import os
 import re
 import time
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
@@ -172,7 +173,6 @@ class RAGPipeline:
         # Locate FAISS index file (support multiple possible filenames)
         primary = self.index_dir / "faiss.index"
         if not primary.exists():
-            # fallback patterns
             candidates = []
             for pat in ("*.index", "*.faiss", "index.faiss"):
                 candidates.extend(self.index_dir.glob(pat))
@@ -181,22 +181,34 @@ class RAGPipeline:
         if not primary.exists():
             raise FileNotFoundError(
                 f"FAISS index file not found in {self.index_dir}")
-        self.index = faiss.read_index(str(primary))
 
-        # Load FAISS and metadata/config
+        # Load metadata + config before encoder/index init so we can rebuild if needed
         self.meta = self._load_meta(self.index_dir)
         self.config = self._load_config(self.index_dir)
 
-        # Determine embedding model and query prefix behavior
         self.model_name = cfg.model_name or self.config.get(
             "model", "sentence-transformers/all-MiniLM-L6-v2")
-        self.doc_prefix = str(self.config.get(
-            "doc_prefix", "")).strip().lower()
-        self.query_prefix = "query: " if self.doc_prefix.startswith(
+        self.doc_prefix = str(self.config.get("doc_prefix", ""))
+        doc_prefix_norm = self.doc_prefix.strip().lower()
+        self.query_prefix = "query: " if doc_prefix_norm.startswith(
             "passage:") else ""
-
-        # Cache encoder model to avoid reloading each query
         self.encoder = SentenceTransformer(self.model_name, device=cfg.device)
+
+        self._faiss_fallback = False
+        self._faiss_fallback_reason: Optional[str] = None
+        allow_fallback = os.getenv("RAG_ALLOW_FAISS_FALLBACK", "1").lower() not in {"0", "false"}
+        try:
+            self.index = faiss.read_index(str(primary))
+        except RuntimeError as err:
+            if not allow_fallback:
+                raise
+            warnings.warn(
+                f"[rag] Failed to load FAISS index '{primary.name}', rebuilding an in-memory index: {err}",
+                RuntimeWarning,
+            )
+            self.index = self._build_fallback_index()
+            self._faiss_fallback = True
+            self._faiss_fallback_reason = str(err)
 
         # Sanity check: vector count must match metadata rows
         if self.index.ntotal != len(self.meta):
@@ -217,6 +229,30 @@ class RAGPipeline:
     def _load_config(index_dir: Path) -> Dict:
         """Load index configuration (e.g., model name, dim, doc_prefix)."""
         return json.loads((index_dir / "config.json").read_text(encoding="utf-8"))
+
+    def _build_fallback_index(self) -> faiss.Index:
+        """Rebuild a simple inner-product index when the persisted FAISS index is incompatible."""
+        docs: List[str] = []
+        prefix = self.doc_prefix or ""
+        for row in self.meta:
+            text = row.get("text") or ""
+            docs.append(f"{prefix}{text}" if prefix else text)
+
+        if not docs:
+            dim = self.encoder.get_sentence_embedding_dimension()
+            return faiss.IndexFlatIP(dim)
+
+        embeddings = self.encoder.encode(
+            docs,
+            batch_size=min(64, len(docs)),
+            convert_to_numpy=True,
+            normalize_embeddings=False,
+        ).astype("float32")
+        embeddings /= (np.linalg.norm(embeddings, axis=1, keepdims=True) + 1e-12)
+        dim = embeddings.shape[1]
+        index = faiss.IndexFlatIP(dim)
+        index.add(embeddings)
+        return index
 
     def _embed_query(self, text: str) -> np.ndarray:
         """Encode a single query; returns L2-normalized float32 vector of shape (1, dim)."""

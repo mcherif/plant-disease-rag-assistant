@@ -43,6 +43,37 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #f7f9fb;
+        }
+        div[data-testid="stCameraInput"] {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            background: #ffffff;
+            max-width: 320px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        div[data-testid="stCameraInput"] video,
+        div[data-testid="stCameraInput"] img {
+            border-radius: 12px;
+        }
+        .small-help {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+    </style>
+    """
+    ,
+    unsafe_allow_html=True
+)
+
+
 
 def load_supported_crops():
     # Reads the plant names from the CSV file
@@ -141,10 +172,17 @@ if show_dashboard:
     st.header("Feedback Dashboard")
     try:
         df = pd.read_json("data/feedback/feedback.jsonl", lines=True)
-        st.bar_chart(df["satisfaction"].value_counts())
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
-        st.line_chart(df.groupby(df["timestamp"].dt.date).size())
-        st.write("Recent feedback:", df.tail(10))
+        if not df.empty:
+            df["timestamp"] = pd.to_datetime(
+                df["timestamp"], errors="coerce", utc=True, format=None
+            )
+            df = df.dropna(subset=["timestamp"])
+        if df.empty:
+            st.info("No feedback data yet.")
+        else:
+            st.bar_chart(df["satisfaction"].value_counts())
+            st.line_chart(df.groupby(df["timestamp"].dt.date).size())
+            st.write("Recent feedback:", df.tail(10))
     except Exception as e:
         st.warning(f"No feedback data yet or error loading dashboard: {e}")
 
@@ -287,28 +325,47 @@ def id2label():
 IMAGE_SOURCE_UPLOAD = "Upload from file"
 IMAGE_SOURCE_CAMERA = "Use camera"
 
-image_source = st.radio(
-    "Image source",
-    (IMAGE_SOURCE_UPLOAD, IMAGE_SOURCE_CAMERA),
-    horizontal=True,
-    key="image_source_selector",
-)
-image_file = None
-if image_source == IMAGE_SOURCE_UPLOAD:
-    image_file = st.file_uploader(
-        "Upload a plant image", type=["jpg", "jpeg", "png"], key="plant_image_file")
-elif image_source == IMAGE_SOURCE_CAMERA:
-    image_file = st.camera_input(
-        "Capture a plant photo", key="plant_camera_capture")
+st.subheader("Diagnose from a photo")
+st.caption("Upload or snap a plant photo to get instant suggestions from the classifier.")
 
+controls_col, preview_col = st.columns([1, 1.1])
+image_file = None
+with controls_col:
+    st.markdown("**Add a photo**")
+    image_source = st.radio(
+        "Image source",
+        (IMAGE_SOURCE_UPLOAD, IMAGE_SOURCE_CAMERA),
+        horizontal=True,
+        key="image_source_selector",
+    )
+    if image_source == IMAGE_SOURCE_UPLOAD:
+        image_file = st.file_uploader(
+            "Upload a plant image", type=["jpg", "jpeg", "png"], key="plant_image_file",
+            help="Use a clear photo showing leaves or fruit.")
+    else:
+        image_file = st.camera_input(
+            "Capture a plant photo", key="plant_camera_capture",
+            help="Allow access to your camera for a quick snapshot.")
+        st.markdown(
+            '<p class="small-help">Tip: natural light and sharp focus improve results.</p>',
+            unsafe_allow_html=True,
+        )
+
+image = None
+image_caption = ""
 if image_file is not None:
     if DEBUG_MODE:
         name = getattr(image_file, "name", "camera_capture")
         st.caption(f"Input source: {image_source}, name: {name}")
     image = Image.open(image_file).convert("RGB")
-    caption = "Captured image" if image_source == IMAGE_SOURCE_CAMERA else "Uploaded image"
-    st.image(image, caption=caption, width=300)
+    image_caption = "Captured image" if image_source == IMAGE_SOURCE_CAMERA else "Uploaded image"
 
+with preview_col:
+    if image is not None:
+        st.image(image, caption=image_caption, width=260)
+
+
+if image is not None:
     with st.spinner("Loading model..."):
         model, processor, model_device = load_model_and_processor()
     labels = id2label()
@@ -358,11 +415,6 @@ detected_plant = st.session_state.get("detected_plant")
 detected_disease = st.session_state.get("detected_disease")
 
 # Inputs
-query = st.text_area(
-    "Question", placeholder="e.g., What can I do to treat this?")
-col1, col2 = st.columns(2)
-
-# Initialize inputs and optionally auto-fill BEFORE creating widgets
 use_labels = st.checkbox(
     "Use detected plant/disease (if available)", value=True)
 # Set defaults if keys missing
@@ -380,6 +432,7 @@ if use_labels and (detected_plant or detected_disease):
         f"Detected: plant={detected_plant or '-'} | disease={detected_disease or '-'}"
     )
 
+col1, col2 = st.columns(2)
 # Now create the text inputs (they will read session_state defaults)
 with col1:
     plant = st.text_input("Plant (optional)",
@@ -387,6 +440,9 @@ with col1:
 with col2:
     disease = st.text_input("Disease (optional)",
                             key="disease_input", placeholder="Bacterial spot")
+
+query = st.text_area(
+    "Question", placeholder="e.g., What can I do to treat this?")
 
 if DEBUG_MODE:
     st.write(f"[DEBUG] Plant: {plant}, Disease: {disease}")
