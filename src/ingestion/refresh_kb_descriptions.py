@@ -25,7 +25,7 @@ import json
 import os
 import re
 import time
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, List, Any
 from urllib.parse import urlparse, urljoin
 
 import requests
@@ -628,6 +628,72 @@ def clean_management_fields(kb: dict) -> None:
                         record["management"])
 
 
+
+
+def _coerce_kb_structure(data: Any) -> Tuple[dict, Optional[Dict[str, Any]]]:
+    """Coerce KB JSON data into the nested {plant: {disease: payload}} format.
+
+    Returns a tuple of (kb_dict, list_meta). list_meta is None when data is already a dict."""
+    if isinstance(data, dict):
+        return data, None
+    if not isinstance(data, list):
+        raise ValueError("KB JSON must be a dict or list of records.")
+    index_map: Dict[Tuple[str, str], List[int]] = {}
+    nested: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for idx, entry in enumerate(data):
+        if not isinstance(entry, dict):
+            continue
+        plant = entry.get("plant")
+        disease = entry.get("disease")
+        if not plant or not disease:
+            continue
+        index_map.setdefault((plant, disease), []).append(idx)
+        payload = nested.setdefault(plant, {}).setdefault(
+            disease,
+            {
+                "source": "",
+                "description": "",
+                "symptoms": "",
+                "cause": "",
+                "management": "",
+            },
+        )
+
+        def _merge(field: str, value: Any) -> None:
+            if value and not payload.get(field):
+                payload[field] = value
+
+        _merge("source", entry.get("source") or entry.get("url"))
+        _merge("description", entry.get("description"))
+        _merge("symptoms", entry.get("symptoms"))
+        _merge("cause", entry.get("cause"))
+        _merge("management", entry.get("management"))
+    return nested, {"rows": data, "index_map": index_map}
+
+
+
+def _apply_updates_to_rows(list_meta: Dict[str, Any], updated: Dict[str, Dict[str, Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Propagate refreshed fields back to the list-style KB rows."""
+    rows = json.loads(json.dumps(list_meta["rows"]))  # deep copy
+    index_map: Dict[Tuple[str, str], List[int]] = list_meta["index_map"]
+    for (plant, disease), indices in index_map.items():
+        plant_block = updated.get(plant)
+        if not isinstance(plant_block, dict):
+            continue
+        payload = plant_block.get(disease)
+        if not isinstance(payload, dict):
+            continue
+        for idx in indices:
+            row = rows[idx]
+            for field in ("description", "symptoms", "cause", "management"):
+                if field in payload:
+                    row[field] = payload.get(field, row.get(field, ""))
+            src = payload.get("source")
+            if src:
+                row["source"] = src
+                row["url"] = src
+    return rows
+
 def refresh_descriptions(
     kb_path: str,
     out_path: Optional[str],
@@ -660,8 +726,9 @@ def refresh_descriptions(
       stats dict with counts: checked, updated, skipped, failed, google_used
     """
     with open(kb_path, "r", encoding="utf-8") as f:
-        kb = json.load(f)
+        kb_data = json.load(f)
 
+    kb, list_meta = _coerce_kb_structure(kb_data)
     updated = json.loads(json.dumps(kb))  # deep copy
     sess = _session()
     plant_re = re.compile(plant_filter, re.I) if plant_filter else None
@@ -847,8 +914,14 @@ def refresh_descriptions(
     # ...existing code for writing updated KB JSON...
     if clean_management:
         clean_management_fields(updated)
+
+    if list_meta:
+        out_data = _apply_updates_to_rows(list_meta, updated)
+    else:
+        out_data = updated
+
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(updated, f, indent=2)
+        json.dump(out_data, f, indent=2)
     return stats
 
 

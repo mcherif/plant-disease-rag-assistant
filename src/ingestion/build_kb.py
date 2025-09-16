@@ -8,7 +8,7 @@ Unified KB builder for PlantVillage (+ Wikipedia soon).
 - Writes chunks/ and a manifest (Parquet or CSV fallback)
 
 Usage:
-  python -m src.ingestion.build_kb --sources plantvillage --out data\\kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
+  python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data\kb --min_tokens 10 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --verbose
 """
 from src.ingestion.kb_validator import validate_kb
 import argparse
@@ -269,15 +269,16 @@ def _seed_pairs_from_pv(kb_path: Union[str, Path]) -> List[Tuple[str, str]]:
     kb = json.loads(Path(kb_path).read_text(encoding="utf-8"))
     pairs: List[Tuple[str, str]] = []
     seen = set()
-    for plant, diseases in kb.items():
-        for disease in diseases.keys():
-            if disease.lower() == "healthy":
-                continue
-            key = (plant, disease)
-            if key in seen:
-                continue
-            seen.add(key)
-            pairs.append(key)
+    for entry in kb:
+        plant = entry["plant"]
+        disease = entry["disease"]
+        if disease.lower() == "healthy":
+            continue
+        key = (plant, disease)
+        if key in seen:
+            continue
+        seen.add(key)
+        pairs.append(key)
     return pairs
 
 
@@ -373,7 +374,6 @@ def load_docs_from_wikipedia(
             misses += 1
             if verbose:
                 print(f"[wiki][miss] {plant} / {disease}")
-
     if verbose:
         print(
             f"[wiki] tried {total} pairs; loaded {len(docs)} docs; misses {misses}")
@@ -712,9 +712,12 @@ def load_docs_from_plantvillage(
 
     docs: List[Doc] = []
     crawl_date = now_date()
-    for plant, diseases in kb.items():
-        for disease, entry in diseases.items():
-            print(f"Processing: plant={plant}, disease={disease}")  # <--- Add this
+    if isinstance(kb, list):
+        for entry in kb:
+            plant = entry["plant"]
+            disease = entry["disease"]
+            # ...process entry...
+            print(f"Processing: plant={plant}, disease={disease}")
             if plant == "Apple" and disease.lower() == "apple scab":
                 print("DEBUG: Apple scab entry:", entry)
             entry.pop("html", None)
@@ -763,6 +766,59 @@ def load_docs_from_plantvillage(
                 "management": management,
             }
             docs.append(doc)
+    else:
+        for plant, diseases in kb.items():
+            for disease, entry in diseases.items():
+                # ...process entry...
+                print(f"Processing: plant={plant}, disease={disease}")
+                if plant == "Apple" and disease.lower() == "apple scab":
+                    print("DEBUG: Apple scab entry:", entry)
+                entry.pop("html", None)
+                if disease.lower() == "healthy":
+                    continue
+                desc = (entry or {}).get("description") or ""
+                symptoms = (entry or {}).get("symptoms") or ""
+                cause = (entry or {}).get("cause") or ""
+                url = (entry or {}).get("source") or ""
+                title = f"{plant} — {disease}"
+                # Sanitize known noisy sections
+                if cause:
+                    cause = _sanitize_cause(cause)
+                if desc:
+                    desc = _strip_leading_title_repeat(desc, disease)
+                parts = []
+                if desc:
+                    parts.append(f"# {title}\n\n{desc}")
+                if symptoms:
+                    parts.append(f"## Symptoms\n\n{symptoms}")
+                if cause:
+                    parts.append(f"## Cause\n\n{cause}")
+                full_text = normalize_to_markdown("\n\n".join(parts).strip())
+                if not full_text:
+                    continue
+                html = entry.get("html")
+                management = ""
+                if html:
+                    disease_sections = extract_disease_sections(html)
+                    # Try to match the current disease name (case-insensitive, partial match)
+                    for section in disease_sections:
+                        if disease.lower() in section.get("disease", "").lower():
+                            management = section.get("management", "")
+                            break
+
+                doc: Doc = {
+                    "doc_id": str(uuid.uuid4()),
+                    "url": url,
+                    "title": title,
+                    "plant": plant,
+                    "disease": disease,
+                    "section": None,
+                    "lang": "en",  # TODO: optional lang detection
+                    "crawl_date": crawl_date,
+                    "text": full_text,
+                    "management": management,
+                }
+                docs.append(doc)
     if verbose:
         print(f"[pv] loaded {len(docs)} docs from {kb_path}")
     return docs
@@ -1062,7 +1118,8 @@ with open("data/apple_diseases.json", "w", encoding="utf-8") as f:
 
 # Example: extract text after <h4>Management</h4>
 def extract_management_text(disease_div):
-    h4 = disease_div.find(lambda tag: tag.name == "h4" and "management" in tag.text.lower())
+    h4 = disease_div.find(lambda tag: tag.name ==
+                          "h4" and "management" in tag.text.lower())
     if h4:
         # Get the next sibling paragraph
         p = h4.find_next_sibling("p")
