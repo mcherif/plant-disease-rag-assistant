@@ -714,6 +714,9 @@ def load_docs_from_plantvillage(
     crawl_date = now_date()
     for plant, diseases in kb.items():
         for disease, entry in diseases.items():
+            print(f"Processing: plant={plant}, disease={disease}")  # <--- Add this
+            if plant == "Apple" and disease.lower() == "apple scab":
+                print("DEBUG: Apple scab entry:", entry)
             entry.pop("html", None)
             if disease.lower() == "healthy":
                 continue
@@ -893,6 +896,8 @@ def build_kb(
         )
         # Ensure min_tokens
         chunks = [c for c in chunks if count_tokens(c) >= min_tokens]
+        if d["plant"] == "Apple" and d["disease"].lower() == "apple scab":
+            print("DEBUG: Before chunking:", d)
         for i, ch in enumerate(chunks):
             n_tokens = count_tokens(ch)
             row = {
@@ -910,6 +915,8 @@ def build_kb(
             }
             rows.append(row)
             write_chunk_file(chunks_dir, d["doc_id"], i, ch)
+            if row['plant'] == "Apple" and row['disease'].lower() == "apple scab":
+                print("DEBUG: Apple scab chunk:", row)
     if verbose:
         print(f"[chunk] wrote {len(rows)} chunks to {chunks_dir}")
 
@@ -936,7 +943,7 @@ def build_kb(
     manifest_path = write_manifest(rows, out_dir, verbose=verbose)
 
     # Save and validate KB (after manifest_path is assigned)
-    save_kb_and_validate(rows, str(manifest_path))
+    save_kb_and_validate(rows, str(out_dir / "kb.json"))
 
     return manifest_path
 

@@ -14,11 +14,11 @@ kb:
 
 # Build PV + Wikipedia (polite)
 kb-all:
-	python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data/kb --min_tokens 50 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
+	python -m src.ingestion.build_kb --sources plantvillage,wikipedia --out data/kb --min_tokens 20 --max_tokens 1000 --overlap 100 --dedup minhash --dedup-threshold 0.9 --wiki-lang en --wiki-interval 0.5 --verbose
 
 # Build FAISS index from the KB manifest
 index:
-	python -m src.retrieval.build_index --manifest data\kb\manifest.parquet --out models\index\kb-faiss-bge --model BAAI/bge-small-en-v1.5 --batch-size 64 --device cuda --doc-prefix "passage: "
+	python -m src.retrieval.build_index --manifest data\kb\manifest.parquet --out models\index\kb-faiss-bge --model BAAI/bge-small-en-v1.5 --batch-size 64 --device cpu --doc-prefix "passage: "
 
 # Offline retrieval evaluation (Recall@k, nDCG@k)
 eval_retrieval:
@@ -52,16 +52,16 @@ run_sample_api:
 	set INDEX_DIR=models/index/sample-faiss-bge&& set PYTHONPATH=.&& uvicorn src.interface.api:app --host 127.0.0.1 --port 8000
 
 docker_build:
-    docker build -t plant-disease-rag:latest .
+	docker build -t plant-disease-rag:latest .
 
 docker_up:
-    docker compose up --build -d
+	docker compose up --build -d
 
 docker_down:
-    docker compose down
+	docker compose down
 
 docker_logs:
-    docker compose logs -f
+	docker compose logs -f
 
 docker_api_shell:
-    docker exec -it plant_rag_api bash
+	docker exec -it plant_rag_api bash

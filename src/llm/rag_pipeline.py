@@ -84,6 +84,8 @@ import faiss  # type: ignore
 import numpy as np
 from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
+import unicodedata
+import difflib
 
 
 def _tok(s: str) -> List[str]:
@@ -99,6 +101,27 @@ def _minmax(x: np.ndarray) -> np.ndarray:
 
 def _norm(v: Any) -> str:
     return str(v or "").strip().lower()
+
+
+def normalize_for_index(text):
+    # Lowercase, remove accents, strip punctuation, etc.
+    text = text.lower()
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join([c for c in text if not unicodedata.combining(c)])
+    text = re.sub(r'[^\w\s]', '', text)
+    return text.strip()
+
+
+def _is_match(query_val, meta_val, threshold=0.7):
+    """Return True if query_val and meta_val are a close match (substring or fuzzy)."""
+    if not query_val or not meta_val:
+        return True  # treat empty as wildcard
+    # Substring match (either direction)
+    if query_val in meta_val or meta_val in query_val:
+        return True
+    # Fuzzy match
+    ratio = difflib.SequenceMatcher(None, query_val, meta_val).ratio()
+    return ratio >= threshold
 
 
 @dataclass
@@ -156,7 +179,8 @@ class RAGPipeline:
             if candidates:
                 primary = candidates[0]
         if not primary.exists():
-            raise FileNotFoundError(f"FAISS index file not found in {self.index_dir}")
+            raise FileNotFoundError(
+                f"FAISS index file not found in {self.index_dir}")
         self.index = faiss.read_index(str(primary))
 
         # Load FAISS and metadata/config
@@ -265,9 +289,15 @@ class RAGPipeline:
         results: List[Tuple[float, int]] = []
         for s, idx in cand:  # cand must be (score, idx)
             meta = self.meta[idx]
-            if plant and _norm(meta.get("plant")) != _norm(plant):
+            # Normalize both sides for robust matching
+            meta_plant = normalize_for_index(meta.get("plant", ""))
+            query_plant = normalize_for_index(plant) if plant else ""
+            meta_disease = normalize_for_index(meta.get("disease", ""))
+            query_disease = normalize_for_index(disease) if disease else ""
+            # Use partial/fuzzy match
+            if plant and not _is_match(query_plant, meta_plant):
                 continue
-            if disease and _norm(meta.get("disease")) != _norm(disease):
+            if disease and not _is_match(query_disease, meta_disease):
                 continue
             results.append((float(s), int(idx)))
             if len(results) >= k:

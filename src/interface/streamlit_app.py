@@ -26,6 +26,7 @@ from transformers import AutoImageProcessor, AutoModelForImageClassification
 from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
 import re
 import pandas as pd
+import unicodedata
 
 DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 
@@ -34,6 +35,14 @@ LOGO_PATH = "images/plant-disease-rag-assistant-logo.png"
 st.set_page_config(page_title="Plant Disease RAG Assistant", layout="wide")
 st.sidebar.image(LOGO_PATH, width="stretch")
 st.title("Plant Disease RAG Assistant")
+
+st.markdown(
+    """
+    📖 [Read more about this app in the README](https://github.com/mcherif/Plant-Disease-RAG-Assistant/blob/main/README.md)
+    """,
+    unsafe_allow_html=True
+)
+
 
 def load_supported_crops():
     # Reads the plant names from the CSV file
@@ -45,9 +54,11 @@ def load_supported_crops():
             plant_col = col
             break
     if plant_col is None:
-        st.warning("Could not find a column for plants/crops in plant_diseases_table.csv.")
+        st.warning(
+            "Could not find a column for plants/crops in plant_diseases_table.csv.")
         return []
     return [str(x).strip() for x in df[plant_col].dropna().unique()]
+
 
 def plant_icon(name: str) -> str:
     icons = {
@@ -66,7 +77,8 @@ def plant_icon(name: str) -> str:
         "tomato": "🍅",
     }
     # Remove 'maize' from display name for corn
-    key = name.lower().replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip().split(" (")[0]
+    key = name.lower().replace(" (including sour)", "").replace(
+        "(maize)", "").replace("maize", "").strip().split(" (")[0]
     # Force single-line display for berry icons by adding a non-breaking space after the emoji
     if key in ["blueberry", "raspberry", "strawberry"]:
         return icons.get(key, "🪴") + "\u00A0"
@@ -74,8 +86,10 @@ def plant_icon(name: str) -> str:
         return icons.get("corn", "🪴")
     return icons.get(key, "🪴")  # Default icon
 
+
 def normalize_plant_name(name):
     return name.lower().replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip()
+
 
 def render_supported_crops(highlight: str | None = None):
     crops = load_supported_crops()
@@ -84,9 +98,11 @@ def render_supported_crops(highlight: str | None = None):
     cols = st.columns(ncols)
     for i, c in enumerate(crops):
         # Clean plant name for display and icon
-        display_name = c.replace(" (including sour)", "").replace("(maize)", "").replace("maize", "").strip()
+        display_name = c.replace(" (including sour)", "").replace(
+            "(maize)", "").replace("maize", "").strip()
         icon = plant_icon(display_name)
-        is_hit = highlight and normalize_plant_name(display_name) == normalize_plant_name(str(highlight))
+        is_hit = highlight and normalize_plant_name(
+            display_name) == normalize_plant_name(str(highlight))
         card_css = f"""
             <div style="
                 padding:8px 8px;
@@ -101,6 +117,7 @@ def render_supported_crops(highlight: str | None = None):
         """
         with cols[i % ncols]:
             st.markdown(card_css, unsafe_allow_html=True)
+
 
 # Place this immediately after st.title and before any other widget
 current_detected = st.session_state.get("detected_plant")
@@ -135,6 +152,7 @@ DEBUG_MODE = st.sidebar.checkbox("Show debug info", value=False)
 
 # ---- helpers (must be defined before use) ----
 
+
 def _canon_plant(s: str) -> str:
     if not s:
         return s
@@ -146,6 +164,7 @@ def _canon_plant(s: str) -> str:
     }
     key = s.lower()
     return aliases.get(key, s.title())
+
 
 def _canon_disease(s: str) -> str:
     if not s:
@@ -165,6 +184,13 @@ def _canon_disease(s: str) -> str:
     }
     key = s.lower()
     return aliases.get(key, re.sub(r"\s+", " ", s).strip())
+
+
+# Debug/test: show canonicalization result in debug mode
+if DEBUG_MODE:
+    st.write("_canon_disease('Apple scab') =", _canon_disease(
+        "Apple scab"))  # Should return "Apple scab"
+
 
 def _infer_labels_from_classifier(raw: str):
     """
@@ -191,8 +217,50 @@ def _infer_labels_from_classifier(raw: str):
     disease = _canon_disease(disease_raw.strip())
     if not disease or disease.lower() == (plant or "").lower():
         disease = _canon_disease(s)
+    # Fix: If disease is a generic term and plant is present, prepend plant
+    generic_diseases = {"scab", "rust", "blight",
+                        "spot", "mildew", "rot", "smut"}
+    if (
+        disease
+        and plant
+        and disease.lower() in generic_diseases
+        and not disease.lower().startswith(plant.lower())
+    ):
+        disease = f"{plant} {disease}"
     return plant, disease or None
+
+
+def normalize(text):
+    # Lowercase, remove accents, strip whitespace
+    text = text.lower()
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join([c for c in text if not unicodedata.combining(c)])
+    return text.strip()
+
+
+def extract_main_disease_name(title: str) -> str:
+    """
+    Extracts the main disease name from a KB title like 'Apple scab — Venturia inaequalis'
+    or 'Apple scab (Venturia inaequalis)'.
+    """
+    # Split on em dash, hyphen, or parenthesis
+    title = re.split(r"[—\-–(]", title)[0]
+    return normalize(title)
+
+
+# Debug/test: normalize and compare
+if DEBUG_MODE:
+    query = 'apple scab'
+    kb_entry = "Apple scab — Venturia inaequalis"
+    # or use '-' if that's the delimiter
+    main_name = kb_entry.split('—')[0].strip()
+    if normalize(query) == normalize(main_name):
+        st.write("Match!")
+    else:
+        st.write("No match.")
+
 # ---- helpers end ----
+
 
 def load_model_and_processor():
     processor = AutoImageProcessor.from_pretrained(MODEL_DIR, use_fast=True)
@@ -201,6 +269,7 @@ def load_model_and_processor():
     model = model.to(device)
     return model, processor, device
 
+
 def id2label():
     # Load mapping from class_mapping.json
     with open("models/vit-finetuned/class_mapping.json", "r") as f:
@@ -208,10 +277,12 @@ def id2label():
     # Invert mapping: {index: class_name}
     mapping = {v: k for k, v in class_map.items()}
     if DEBUG_MODE:
-        st.write("[DEBUG] id2label mapping sample:", dict(list(mapping.items())[:10]))
+        st.write("[DEBUG] id2label mapping sample:",
+                 dict(list(mapping.items())[:10]))
     return mapping
 
 # ---- Supported crops section (always visible; highlights after upload) ----
+
 
 uploaded = st.file_uploader(
     "Upload a plant image", type=["jpg", "jpeg", "png"])
@@ -237,7 +308,8 @@ if uploaded is not None:
     st.subheader("Top predictions")
     for score, idx in zip(scores.tolist(), idxs.tolist()):
         if DEBUG_MODE:
-            st.write(f"[DEBUG] idx={idx}, type={type(idx)}, label_name={labels.get(idx)}")
+            st.write(
+                f"[DEBUG] idx={idx}, type={type(idx)}, label_name={labels.get(idx)}")
         label_name = labels.get(idx, f"LABEL_{idx}")
         plant, disease = _infer_labels_from_classifier(label_name)
         if disease:
@@ -254,7 +326,8 @@ if uploaded is not None:
     ):
         st.session_state["detected_plant"] = plant_guess
         st.session_state["detected_disease"] = disease_guess
-        st.session_state["force_rerun"] = not st.session_state.get("force_rerun", False)
+        st.session_state["force_rerun"] = not st.session_state.get(
+            "force_rerun", False)
         st.rerun()
         st.stop()  # Prevent further code from running in this pass
 
@@ -298,6 +371,9 @@ with col2:
     disease = st.text_input("Disease (optional)",
                             key="disease_input", placeholder="Bacterial spot")
 
+if DEBUG_MODE:
+    st.write(f"[DEBUG] Plant: {plant}, Disease: {disease}")
+
 run = st.button("Get answer", type="primary")
 
 # Run
@@ -308,12 +384,45 @@ if run:
     disease_norm = _canon_disease(st.session_state.get("disease_input") or "")
     plant_norm = plant_norm or None
     disease_norm = disease_norm or None
-    if use_labels and (plant_norm or disease_norm):
-        q = " ".join([x for x in [plant_norm, disease_norm, q] if x])
+
+    # Always include both main and full disease names if available and different
+    disease_main = extract_main_disease_name(
+        disease_norm) if disease_norm else None
+    disease_full = disease_norm
+    disease_names = []
+    if disease_main:
+        disease_names.append(disease_main)
+    if disease_full and disease_full != disease_main:
+        disease_names.append(disease_full)
+    # Remove duplicates while preserving order
+    disease_names = list(dict.fromkeys([d for d in disease_names if d]))
+
+    if use_labels and (plant_norm or disease_names):
+        # Prefer a natural language question
+        disease_part = disease_names[0] if disease_names else ""
+        if plant_norm and disease_part:
+            q = f"How do I treat {disease_part} on {plant_norm}?"
+        elif plant_norm:
+            q = f"What diseases affect {plant_norm} and how can I treat them?"
+        elif disease_part:
+            q = f"How do I treat {disease_part}?"
+        # Optionally, append the user's question if it's not the default
+        if query and query.strip() and query.strip() != DEFAULT_QUESTION:
+            q += f" {query.strip()}"
+
+    if DEBUG_MODE:
+        st.write(
+            f"[DEBUG] RAG query: {q}, plant: {plant_norm}, disease: {disease_norm}")
 
     with st.spinner("Retrieving and generating..."):
         try:
             res = rag.answer(q, plant=plant_norm, disease=disease_norm)
+            # Debug: Show retrieved KB titles
+            if DEBUG_MODE:
+                st.write("[DEBUG] Retrieved KB titles:")
+                for doc in res.get("retrieved", []):
+                    meta = doc.get("meta", {})
+                    st.write(meta.get("title") or meta.get("doc_id"))
         except Exception as e:
             st.error(f"RAG error: {e}")
         else:
