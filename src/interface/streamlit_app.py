@@ -284,13 +284,30 @@ def id2label():
 # ---- Supported crops section (always visible; highlights after upload) ----
 
 
-uploaded = st.file_uploader(
-    "Upload a plant image", type=["jpg", "jpeg", "png"])
-if uploaded is not None:
+IMAGE_SOURCE_UPLOAD = "Upload from file"
+IMAGE_SOURCE_CAMERA = "Use camera"
+
+image_source = st.radio(
+    "Image source",
+    (IMAGE_SOURCE_UPLOAD, IMAGE_SOURCE_CAMERA),
+    horizontal=True,
+    key="image_source_selector",
+)
+image_file = None
+if image_source == IMAGE_SOURCE_UPLOAD:
+    image_file = st.file_uploader(
+        "Upload a plant image", type=["jpg", "jpeg", "png"], key="plant_image_file")
+elif image_source == IMAGE_SOURCE_CAMERA:
+    image_file = st.camera_input(
+        "Capture a plant photo", key="plant_camera_capture")
+
+if image_file is not None:
     if DEBUG_MODE:
-        st.caption(f"Filename: {uploaded.name}")
-    image = Image.open(uploaded).convert("RGB")
-    st.image(image, caption="Uploaded image", width=300)
+        name = getattr(image_file, "name", "camera_capture")
+        st.caption(f"Input source: {image_source}, name: {name}")
+    image = Image.open(image_file).convert("RGB")
+    caption = "Captured image" if image_source == IMAGE_SOURCE_CAMERA else "Uploaded image"
+    st.image(image, caption=caption, width=300)
 
     with st.spinner("Loading model..."):
         model, processor, model_device = load_model_and_processor()
@@ -488,3 +505,4 @@ if st.session_state.get("last_answer"):
             st.success("Thank you for your feedback!")
     else:
         st.info("Feedback already submitted. Thank you!")
+
