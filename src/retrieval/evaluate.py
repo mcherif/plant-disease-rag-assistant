@@ -78,7 +78,16 @@ def load_config(index_dir: Path) -> Dict:
     Returns:
         Dict: configuration including model name, vector dim, doc_prefix, etc.
     """
-    return json.loads((index_dir / "config.json").read_text(encoding="utf-8"))
+    try:
+        return json.loads((index_dir / "config.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {
+            "model": "BAAI/bge-small-en-v1.5",
+            "doc_prefix": "passage: ",
+            "normalize": True,
+            "metric": "cosine (IP on normalized vectors)",
+            "dim": 384,
+        }
 
 
 def _tok(s: str) -> List[str]:
@@ -145,7 +154,7 @@ def _load_meta_fallback(index_dir: Path) -> List[Dict]:
     kb_path = _locate_fallback_kb(index_dir)
     try:
         raw = json.loads(kb_path.read_text(encoding="utf-8"))
-    except Exception as err:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         warnings.warn(
             f"[eval] Fallback KB not available at {kb_path}; using bundled sample KB.",
             RuntimeWarning,
