@@ -30,7 +30,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Any
 
 import faiss  # type: ignore
 import numpy as np
@@ -40,21 +40,37 @@ from sentence_transformers import SentenceTransformer
 
 
 def load_meta(index_dir: Path) -> List[Dict]:
-    """Load metadata rows (one per vector) saved alongside the FAISS index.
-
-    Expects a meta.jsonl file in index_dir with one JSON object per line, aligned
-    with the vector order stored in faiss.index.
-
-    Returns:
-        List[Dict]: list of metadata dicts (e.g., title, plant, disease, url, text).
-    """
-    rows = []
-    with (index_dir / "meta.jsonl").open("r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                rows.append(json.loads(line))
-    return rows
-
+    """Load metadata rows (one per vector) saved alongside the FAISS index."""
+    meta_path = index_dir / "meta.jsonl"
+    rows: List[Dict[str, Any]] = []
+    try:
+        with meta_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    warnings.warn(
+                        f"[eval] Could not parse {meta_path.name}; using fallback KB data.",
+                        RuntimeWarning,
+                    )
+                    rows = _load_meta_fallback(index_dir)
+                    break
+    except FileNotFoundError:
+        warnings.warn(
+            f"[eval] Metadata file {meta_path} missing; using fallback KB data.",
+            RuntimeWarning,
+        )
+        rows = _load_meta_fallback(index_dir)
+    if not rows:
+        warnings.warn(
+            f"[eval] Metadata empty in {meta_path}; using fallback KB data.",
+            RuntimeWarning,
+        )
+        rows = _load_meta_fallback(index_dir)
+    return _hydrate_meta_rows(rows)
 
 def load_config(index_dir: Path) -> Dict:
     """Load index configuration saved by build_index.py (config.json).
@@ -105,7 +121,7 @@ def _build_fallback_index(meta: List[Dict], encoder: SentenceTransformer, doc_pr
     docs: List[str] = []
     prefix = doc_prefix or ""
     for row in meta:
-        text = row.get("text") or ""
+        text = _ensure_text(row)
         docs.append(f"{prefix}{text}" if prefix else text)
 
     if not docs:
@@ -124,6 +140,56 @@ def _build_fallback_index(meta: List[Dict], encoder: SentenceTransformer, doc_pr
     index.add(embeddings)
     return index
 
+
+def _load_meta_fallback(index_dir: Path) -> List[Dict]:
+    kb_path = _locate_fallback_kb(index_dir)
+    try:
+        raw = json.loads(kb_path.read_text(encoding="utf-8"))
+    except Exception as err:  # noqa: BLE001
+        raise RuntimeError(f"Fallback KB data unavailable at {kb_path}") from err
+    return [dict(row) for row in raw if isinstance(row, dict)]
+
+
+def _locate_fallback_kb(index_dir: Path) -> Path:
+    for base in [index_dir, *index_dir.parents]:
+        candidate = base / "data" / "kb" / "kb.json"
+        if candidate.exists():
+            return candidate
+    return Path("data/kb/kb.json")
+
+
+def _hydrate_meta_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    hydrated: List[Dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        item = dict(row)
+        for key in ("title", "plant", "disease", "url", "doc_id"):
+            if key in item and item[key] is not None:
+                item[key] = str(item[key])
+        _ensure_text(item)
+        hydrated.append(item)
+    if not hydrated:
+        raise RuntimeError("No metadata rows available for retrieval.")
+    return hydrated
+
+
+def _ensure_text(row: Dict[str, Any]) -> str:
+    text = str(row.get("text") or "").strip()
+    if not text:
+        parts = []
+        for key in ("description", "symptoms", "cause", "management", "prevention"):
+            val = row.get(key)
+            if val:
+                parts.append(str(val))
+        if not parts:
+            for key in ("title", "plant", "disease"):
+                val = row.get(key)
+                if val:
+                    parts.append(str(val))
+        text = "\n".join(part.strip() for part in parts if part).strip()
+    row["text"] = text
+    return text
 
 def _infer_query_prefix(cfg: Dict, given: str) -> str:
     """Determine query prefix if not explicitly provided.

@@ -88,21 +88,17 @@ from sentence_transformers import SentenceTransformer
 import unicodedata
 import difflib
 
-
 def _tok(s: str) -> List[str]:
     """Lightweight tokenizer for BM25: lowercase alphanumeric tokens."""
     return re.findall(r"\w+", str(s).lower())
-
 
 def _minmax(x: np.ndarray) -> np.ndarray:
     """Min–max normalize a 1D score array to [0, 1]; returns zeros if degenerate."""
     mn, mx = float(x.min()), float(x.max())
     return (x - mn) / (mx - mn + 1e-12) if mx > mn else np.zeros_like(x)
 
-
 def _norm(v: Any) -> str:
     return str(v or "").strip().lower()
-
 
 def normalize_for_index(text):
     # Lowercase, remove accents, strip punctuation, etc.
@@ -111,7 +107,6 @@ def normalize_for_index(text):
     text = ''.join([c for c in text if not unicodedata.combining(c)])
     text = re.sub(r'[^\w\s]', '', text)
     return text.strip()
-
 
 def _is_match(query_val, meta_val, threshold=0.7):
     """Return True if query_val and meta_val are a close match (substring or fuzzy)."""
@@ -123,7 +118,6 @@ def _is_match(query_val, meta_val, threshold=0.7):
     # Fuzzy match
     ratio = difflib.SequenceMatcher(None, query_val, meta_val).ratio()
     return ratio >= threshold
-
 
 @dataclass
 class RetrievalConfig:
@@ -149,7 +143,6 @@ class RetrievalConfig:
         "Sorry, I don't have enough context to answer confidently. "
         "Try rephrasing the question or narrowing by plant/disease."
     )
-
 
 class RAGPipeline:
     """RAG pipeline orchestrating retrieval, prompt composition, and generation.
@@ -215,27 +208,97 @@ class RAGPipeline:
             raise RuntimeError(
                 f"Index size {self.index.ntotal} != meta rows {len(self.meta)}")
 
-    @staticmethod
-    def _load_meta(index_dir: Path) -> List[Dict]:
-        """Load metadata rows aligned with vectors (one JSON per line)."""
-        rows = []
-        with (index_dir / "meta.jsonl").open("r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
-                    rows.append(json.loads(line))
-        return rows
+    def _load_meta(self, index_dir: Path) -> List[Dict]:
+        """Load metadata rows, falling back to a local KB snapshot when necessary."""
+        meta_path = index_dir / "meta.jsonl"
+        rows: List[Dict[str, Any]] = []
+        try:
+            with meta_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rows.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        warnings.warn(
+                            f"[rag] Could not parse {meta_path.name}; using fallback KB data.",
+                            RuntimeWarning,
+                        )
+                        rows = self._load_meta_fallback()
+                        break
+        except FileNotFoundError:
+            warnings.warn(
+                f"[rag] Metadata file {meta_path} missing; using fallback KB data.",
+                RuntimeWarning,
+            )
+            rows = self._load_meta_fallback()
+        if not rows:
+            warnings.warn(
+                f"[rag] Metadata empty in {meta_path}; using fallback KB data.",
+                RuntimeWarning,
+            )
+            rows = self._load_meta_fallback()
+        return self._hydrate_meta_rows(rows)
 
     @staticmethod
     def _load_config(index_dir: Path) -> Dict:
         """Load index configuration (e.g., model name, dim, doc_prefix)."""
         return json.loads((index_dir / "config.json").read_text(encoding="utf-8"))
 
+    def _load_meta_fallback(self) -> List[Dict]:
+        kb_path = self._locate_fallback_kb()
+        try:
+            raw = json.loads(kb_path.read_text(encoding="utf-8"))
+        except Exception as err:  # noqa: BLE001
+            raise RuntimeError(f"Fallback KB data unavailable at {kb_path}") from err
+        return [dict(row) for row in raw if isinstance(row, dict)]
+
+    def _locate_fallback_kb(self) -> Path:
+        for base in [self.index_dir, *self.index_dir.parents]:
+            candidate = base / "data" / "kb" / "kb.json"
+            if candidate.exists():
+                return candidate
+        return Path("data/kb/kb.json")
+
+    def _hydrate_meta_rows(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        hydrated: List[Dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            item = dict(row)
+            for key in ("title", "plant", "disease", "url", "doc_id"):
+                if key in item and item[key] is not None:
+                    item[key] = str(item[key])
+            self._ensure_text(item)
+            hydrated.append(item)
+        if not hydrated:
+            raise RuntimeError("No metadata rows available for retrieval.")
+        return hydrated
+
+    def _ensure_text(self, row: Dict[str, Any]) -> str:
+        text = str(row.get("text") or "").strip()
+        if not text:
+            parts = []
+            for key in ("description", "symptoms", "cause", "management", "prevention"):
+                val = row.get(key)
+                if val:
+                    parts.append(str(val))
+            if not parts:
+                for key in ("title", "plant", "disease"):
+                    val = row.get(key)
+                    if val:
+                        parts.append(str(val))
+            text = "\n".join(part.strip() for part in parts if part).strip()
+        row["text"] = text
+        return text
+
     def _build_fallback_index(self) -> faiss.Index:
         """Rebuild a simple inner-product index when the persisted FAISS index is incompatible."""
         docs: List[str] = []
         prefix = self.doc_prefix or ""
         for row in self.meta:
-            text = row.get("text") or ""
+            text = self._ensure_text(row)
             docs.append(f"{prefix}{text}" if prefix else text)
 
         if not docs:
