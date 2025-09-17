@@ -27,6 +27,7 @@ from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
 import re
 import pandas as pd
 import unicodedata
+import hashlib
 
 DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 
@@ -150,6 +151,9 @@ def render_supported_crops(highlight: str | None = None):
 
 
 # Place this immediately after st.title and before any other widget
+if "rag_valid" not in st.session_state:
+    st.session_state["rag_valid"] = True
+
 current_detected = st.session_state.get("detected_plant")
 render_supported_crops(current_detected)
 
@@ -249,7 +253,7 @@ def _infer_labels_from_classifier(raw: str):
     s = re.sub(r"[_\-]+", " ", str(raw)).strip()
     low = s.lower()
     plant_keys = ["peach", "tomato", "potato", "apple", "grape", "corn", "maize",
-                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "raspberry", "soybean", "cherry"]
+                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "raspberry", "soybean", "squash", "cherry"]
     plant = None
     matched_key = None
     for k in plant_keys:
@@ -277,6 +281,7 @@ def _infer_labels_from_classifier(raw: str):
     if (
         disease
         and plant
+        and " " not in disease
         and disease.lower() in generic_diseases
         and not disease.lower().startswith(plant.lower())
     ):
@@ -372,6 +377,13 @@ with controls_col:
 image = None
 image_caption = ""
 if image_file is not None:
+    raw_bytes = image_file.getvalue()
+    image_hash = hashlib.md5(raw_bytes).hexdigest() if raw_bytes else None
+    if image_hash and st.session_state.get("last_image_hash") != image_hash:
+        st.session_state["last_image_hash"] = image_hash
+        st.session_state["rag_valid"] = False
+    if hasattr(image_file, "seek"):
+        image_file.seek(0)
     if DEBUG_MODE:
         name = getattr(image_file, "name", "camera_capture")
         st.caption(f"Input source: {image_source}, name: {name}")
@@ -420,6 +432,7 @@ if image is not None:
         st.session_state["detected_disease"] = disease_guess
         st.session_state["plant_input"] = plant_guess or ""
         st.session_state["disease_input"] = disease_guess or ""
+        st.session_state["rag_valid"] = False
         st.session_state["force_rerun"] = not st.session_state.get(
             "force_rerun", False)
         st.rerun()
@@ -525,60 +538,80 @@ if run:
             st.session_state["last_disease"] = disease_norm
             st.session_state["last_sources"] = res.get("retrieved", [])
             st.session_state["feedback_submitted"] = False
+            st.session_state["rag_valid"] = True
 
 # Always show the answer and feedback form if available
 if st.session_state.get("last_answer"):
-    st.subheader("Answer")
-    st.write(st.session_state["last_answer"])
-    retrieved = st.session_state.get("last_sources", []) or []
-    if retrieved:
-        st.subheader("Sources")
-        for i, doc in enumerate(retrieved, start=1):
-            meta = doc.get("meta", {})
-            title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
-            url = meta.get("url")
-            with st.expander(f"[{i}] {title}"):
-                if url:
-                    st.markdown(f"[{url}]({url})")
-                st.write(meta.get("text", "")[:1200])
+    rag_valid = st.session_state.get("rag_valid", True)
+    if not rag_valid:
+        st.subheader("Answer")
+        st.info("Detected a new image. Run 'Get answer' to refresh this response.")
+        with st.expander("Previous answer (stale)", expanded=False):
+            st.write(st.session_state["last_answer"])
+            retrieved = st.session_state.get("last_sources", []) or []
+            if retrieved:
+                for i, doc in enumerate(retrieved, start=1):
+                    meta = doc.get("meta", {})
+                    title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
+                    url = meta.get("url")
+                    bullet = f"[{i}] {title}"
+                    if url:
+                        st.markdown(f"{bullet} - [{url}]({url})")
+                    else:
+                        st.write(bullet)
+            else:
+                st.info("No sources were retrieved for the previous answer.")
     else:
-        st.info("No sources retrieved.")
+        st.subheader("Answer")
+        st.write(st.session_state["last_answer"])
+        retrieved = st.session_state.get("last_sources", []) or []
+        if retrieved:
+            st.subheader("Sources")
+            for i, doc in enumerate(retrieved, start=1):
+                meta = doc.get("meta", {})
+                title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
+                url = meta.get("url")
+                with st.expander(f"[{i}] {title}"):
+                    if url:
+                        st.markdown(f"[{url}]({url})")
+                    st.write(meta.get("text", "")[:1200])
+        else:
+            st.info("No sources retrieved.")
 
-    # Feedback form
-    if "feedback_submitted" not in st.session_state:
-        st.session_state["feedback_submitted"] = False
+        if "feedback_submitted" not in st.session_state:
+            st.session_state["feedback_submitted"] = False
 
-    if not st.session_state["feedback_submitted"]:
-        st.subheader("Your Feedback")
-        col_fb1, col_fb2 = st.columns([1, 4])
-        with col_fb1:
-            satisfaction = st.radio(
-                "Was this answer helpful?",
-                ["👍 Yes", "👎 No"],
-                horizontal=True,
-                key="satisfaction_radio"
-            )
-        with col_fb2:
-            user_comment = st.text_area(
-                "Additional comments (optional)",
-                key="user_comment_area"
-            )
-        if st.button("Submit Feedback", key="submit_feedback_btn"):
-            import datetime
-            feedback_entry = {
-                "timestamp": datetime.datetime.now().isoformat(),
-                "question": st.session_state["last_question"],
-                "plant": st.session_state["last_plant"],
-                "disease": st.session_state["last_disease"],
-                "answer": st.session_state["last_answer"],
-                "satisfaction": satisfaction,
-                "comment": user_comment
-            }
-            os.makedirs("data/feedback", exist_ok=True)
-            with open("data/feedback/feedback.jsonl", "a", encoding="utf-8") as f:
-                f.write(json.dumps(feedback_entry, ensure_ascii=False) + "\n")
-            st.session_state["feedback_submitted"] = True
-            st.success("Thank you for your feedback!")
-    else:
-        st.info("Feedback already submitted. Thank you!")
+        if not st.session_state["feedback_submitted"]:
+            st.subheader("Your Feedback")
+            col_fb1, col_fb2 = st.columns([1, 4])
+            with col_fb1:
+                satisfaction = st.radio(
+                    "Was this answer helpful?",
+                    ["👍 Yes", "👎 No"],
+                    horizontal=True,
+                    key="satisfaction_radio"
+                )
+            with col_fb2:
+                user_comment = st.text_area(
+                    "Additional comments (optional)",
+                    key="user_comment_area"
+                )
+            if st.button("Submit Feedback", key="submit_feedback_btn"):
+                import datetime
+                feedback_entry = {
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "question": st.session_state["last_question"],
+                    "plant": st.session_state["last_plant"],
+                    "disease": st.session_state["last_disease"],
+                    "answer": st.session_state["last_answer"],
+                    "satisfaction": satisfaction,
+                    "comment": user_comment
+                }
+                os.makedirs("data/feedback", exist_ok=True)
+                with open("data/feedback/feedback.jsonl", "a", encoding="utf-8") as f:
+                    f.write(json.dumps(feedback_entry, ensure_ascii=False) + "\n")
+                st.session_state["feedback_submitted"] = True
+                st.success("Thank you for your feedback!")
+        else:
+            st.info("Feedback already submitted. Thank you!")
 
