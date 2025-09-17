@@ -187,6 +187,8 @@ What’s done / Next steps
 - [x] Pipeline fixes
   - [x] Retrieval hits normalized to dicts with meta (no tuple .get errors)
   - [x] Plant/disease filters applied in retrieval/prompt
+  - [x] Streamlit auto-clears stale answers when a new image is uploaded; stale content moves to a collapsible panel
+  - [x] Classifier label normalization for "healthy" and squash/raspberry aliases
 
 Next steps (M5.x)
 - [ ] Retrieval: add reranker; expose fusion/alpha in UI
