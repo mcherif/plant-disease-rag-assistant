@@ -125,15 +125,14 @@ def normalize_plant_name(name):
 def render_supported_crops(highlight: str | None = None):
     crops = load_supported_crops()
     st.subheader("Supported crops")
-    ncols = 13  # Display 13 plants per row
+    ncols = 14  # Display 14 plants per row
     cols = st.columns(ncols)
     for i, c in enumerate(crops):
-        # Clean plant name for display and icon
-        display_name = c.replace(" (including sour)", "").replace(
-            "(maize)", "").replace("maize", "").strip()
+        raw_name = str(c).strip()
+        display_name = re.sub("\\s+", " ", raw_name.replace(" (including sour)", "").replace(
+            "(maize)", "").replace("maize", "").replace(", bell", "").strip())
         icon = plant_icon(display_name)
-        is_hit = highlight and normalize_plant_name(
-            display_name) == normalize_plant_name(str(highlight))
+        is_hit = bool(highlight) and normalize_plant_name(raw_name) == normalize_plant_name(str(highlight))
         card_css = f"""
             <div style="
                 padding:8px 8px;
@@ -199,6 +198,8 @@ def _canon_plant(s: str) -> str:
         "peach tree": "Peach",
         "maize": "Corn (maize)",
         "corn": "Corn (maize)",
+        "pepper": "Pepper, bell",
+        "bell pepper": "Pepper, bell",
     }
     key = s.lower()
     return aliases.get(key, s.title())
@@ -208,6 +209,7 @@ def _canon_disease(s: str) -> str:
     if not s:
         return s
     s = s.strip()
+    s = re.sub(r"^[\s,;:-]+", "", s)
     # Remove parenthetical qualifiers like (maize)
     s = re.sub(r"\(.*?\)", "", s)
     s = s.replace("  ", " ").strip()
@@ -219,6 +221,11 @@ def _canon_disease(s: str) -> str:
         "northern leaf blight": "Northern Leaf Blight",
         "gray leaf spot": "Cercospora leaf spot Gray leaf spot",
         "common rust": "Common rust",
+        "bacterial spot": "Bacterial spot",
+        "bell bacterial spot": "Bacterial spot",
+        "pepper bell bacterial spot": "Bacterial spot",
+        "bell pepper bacterial spot": "Bacterial spot",
+        "pepper bacterial spot": "Bacterial spot",
     }
     key = s.lower()
     return aliases.get(key, re.sub(r"\s+", " ", s).strip())
@@ -252,6 +259,13 @@ def _infer_labels_from_classifier(raw: str):
     if matched_key:
         disease_raw = re.sub(
             rf"\b{re.escape(matched_key)}\b", " ", disease_raw, flags=re.I)
+        plant_alias = _canon_plant(matched_key) or matched_key
+        plant_tokens = re.findall(r"\w+", plant_alias.lower())
+        for token in plant_tokens:
+            disease_raw = re.sub(
+                rf"\b{re.escape(token)}\b", " ", disease_raw, flags=re.I)
+        disease_raw = re.sub(r"\s+", " ", disease_raw)
+        disease_raw = disease_raw.strip().lstrip(",;:- ")
     disease = _canon_disease(disease_raw.strip())
     if not disease or disease.lower() == (plant or "").lower():
         disease = _canon_disease(s)
@@ -264,7 +278,9 @@ def _infer_labels_from_classifier(raw: str):
         and disease.lower() in generic_diseases
         and not disease.lower().startswith(plant.lower())
     ):
-        disease = f"{plant} {disease}"
+        plant_prefix = plant.replace(",", " ")
+        plant_prefix = re.sub(r"\s+", " ", plant_prefix).strip()
+        disease = f"{plant_prefix} {disease}".strip()
     return plant, disease or None
 
 

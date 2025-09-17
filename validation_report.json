@@ -1,0 +1,392 @@
+[
+  {
+    "idx": 0,
+    "doc_id": "417828a5-cbd4-4900-a98d-787ff50547d0",
+    "plant": "Apple",
+    "disease": "Apple scab",
+    "title": "Apple — Apple scab",
+    "source": "https://plantvillage.psu.edu/topics/apple/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 1,
+    "doc_id": "be7602de-4884-469d-b95e-f9f92290bc90",
+    "plant": "Apple",
+    "disease": "Black rot",
+    "title": "Apple — Black rot",
+    "source": "https://plantvillage.psu.edu/topics/apple/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 2,
+    "doc_id": "28139361-9c31-466a-8491-ca5ba1423320",
+    "plant": "Apple",
+    "disease": "Cedar apple rust",
+    "title": "Apple — Cedar apple rust",
+    "source": "https://plantvillage.psu.edu/topics/apple/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 3,
+    "doc_id": "10994eb9-3e4c-49f2-aa6f-4ce2d22a32ad",
+    "plant": "Cherry (including sour)",
+    "disease": "Powdery mildew",
+    "title": "Cherry (including sour) — Powdery mildew",
+    "source": "https://plantvillage.psu.edu/topics/cherry-including-sour/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 4,
+    "doc_id": "99f52c68-748c-4261-88e7-142c8031a79d",
+    "plant": "Corn (maize)",
+    "disease": "Cercospora leaf spot Gray leaf spot",
+    "title": "Corn (maize) — Cercospora leaf spot Gray leaf spot",
+    "source": "https://plantvillage.psu.edu/topics/corn-maize/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 5,
+    "doc_id": "df576ed8-f80c-4c7c-a6a2-51c50627875e",
+    "plant": "Corn (maize)",
+    "disease": "Common rust",
+    "title": "Corn (maize) — Common rust",
+    "source": "https://plantvillage.psu.edu/topics/corn-maize/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 6,
+    "doc_id": "c016eb3c-99a5-4eae-bbbf-e37023f047b1",
+    "plant": "Corn (maize)",
+    "disease": "Northern Leaf Blight",
+    "title": "Corn (maize) — Northern Leaf Blight",
+    "source": "https://plantvillage.psu.edu/topics/corn-maize/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 7,
+    "doc_id": "3ce02537-40e3-488a-bca8-ae500eefc3f3",
+    "plant": "Grape",
+    "disease": "Black rot",
+    "title": "Grape — Black rot",
+    "source": "https://plantvillage.psu.edu/topics/grape/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 8,
+    "doc_id": "12248a43-4898-418f-99ad-6cd7968ff22a",
+    "plant": "Grape",
+    "disease": "Esca (Black Measles)",
+    "title": "Grape — Esca (Black Measles)",
+    "source": "https://plantvillage.psu.edu/topics/grape/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 9,
+    "doc_id": "86c6173a-ad7e-4862-a687-6e5a43f0baab",
+    "plant": "Grape",
+    "disease": "Leaf blight (Isariopsis Leaf Spot)",
+    "title": "Grape — Leaf blight (Isariopsis Leaf Spot)",
+    "source": "https://plantvillage.psu.edu/topics/grape/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 10,
+    "doc_id": "1aabe030-d369-458f-bbd4-462825520faf",
+    "plant": "Orange",
+    "disease": "Haunglongbing (Citrus greening)",
+    "title": "Orange — Haunglongbing (Citrus greening)",
+    "source": "https://plantvillage.psu.edu/topics/orange/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 11,
+    "doc_id": "63a9e3ee-ad1f-4e81-8bb4-bbdcd14acf7e",
+    "plant": "Peach",
+    "disease": "Bacterial spot",
+    "title": "Peach — Bacterial spot",
+    "source": "https://plantvillage.psu.edu/topics/peach/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 12,
+    "doc_id": "106ae4cf-dbd6-4b53-9ed5-f81be660b643",
+    "plant": "Potato",
+    "disease": "Early blight",
+    "title": "Potato — Early blight",
+    "source": "https://plantvillage.psu.edu/topics/potato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 13,
+    "doc_id": "5b5a9257-acd3-442a-a5bc-7ff77c466f58",
+    "plant": "Potato",
+    "disease": "Late blight",
+    "title": "Potato — Late blight",
+    "source": "https://plantvillage.psu.edu/topics/potato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 14,
+    "doc_id": "26f25c50-9821-4e3c-beb7-3d308ee51f54",
+    "plant": "Squash",
+    "disease": "Powdery mildew",
+    "title": "Squash — Powdery mildew",
+    "source": "https://plantvillage.psu.edu/topics/squash/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 15,
+    "doc_id": "ba425576-0755-4673-9c5d-c9b9400c960a",
+    "plant": "Strawberry",
+    "disease": "Leaf scorch",
+    "title": "Strawberry — Leaf scorch",
+    "source": "https://plantvillage.psu.edu/topics/strawberry/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 16,
+    "doc_id": "85d3c101-3d65-4e6a-9f0f-63ae3d27532f",
+    "plant": "Tomato",
+    "disease": "Bacterial spot",
+    "title": "Tomato — Bacterial spot",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 17,
+    "doc_id": "f8960251-9913-48c7-beb9-1197122c882d",
+    "plant": "Tomato",
+    "disease": "Early blight",
+    "title": "Tomato — Early blight",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 18,
+    "doc_id": "bb7a0bbc-cc5c-4701-b003-e60d031bb169",
+    "plant": "Tomato",
+    "disease": "Late blight",
+    "title": "Tomato — Late blight",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 19,
+    "doc_id": "a505ab24-2781-4bbe-af3c-0a11f941af14",
+    "plant": "Tomato",
+    "disease": "Leaf Mold",
+    "title": "Tomato — Leaf Mold",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 20,
+    "doc_id": "1ba37560-d0f3-4d1d-9c23-79280e28863c",
+    "plant": "Tomato",
+    "disease": "Septoria leaf spot",
+    "title": "Tomato — Septoria leaf spot",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 21,
+    "doc_id": "cccd7a7d-6c8d-4094-b7c7-0a95517cc426",
+    "plant": "Tomato",
+    "disease": "Spider mites Two-spotted spider mite",
+    "title": "Tomato — Spider mites Two-spotted spider mite",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 22,
+    "doc_id": "745542db-046c-4107-ba6c-e0764cc58f50",
+    "plant": "Tomato",
+    "disease": "Target Spot",
+    "title": "Tomato — Target Spot",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 23,
+    "doc_id": "ee9537d0-bfd0-44b6-b15a-b6bafa3dc29c",
+    "plant": "Tomato",
+    "disease": "Tomato mosaic virus",
+    "title": "Tomato — Tomato mosaic virus",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 24,
+    "doc_id": "0f057fcf-c368-4193-b6ef-5d3239948f9a",
+    "plant": "Tomato",
+    "disease": "Tomato Yellow Leaf Curl Virus",
+    "title": "Tomato — Tomato Yellow Leaf Curl Virus",
+    "source": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 25,
+    "doc_id": "5da59fc5-45bd-4b66-aefb-6580c8204971",
+    "plant": "Pepper, bell",
+    "disease": "Bacterial spot",
+    "title": "Pepper, bell — Bacterial spot",
+    "source": "https://plantvillage.psu.edu/topics/pepper-bell/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  }
+]

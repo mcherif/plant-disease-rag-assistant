@@ -1,0 +1,4 @@
+## Symptoms
+The infected leaves become reduced in size, curl upward, appear crumpled and show yellowing of veins and leaf margins. The internodes become shorter and whole plant appear stunted and bushy. The whole plant stand erect with only upright growth. The flowers may not develop and drop off.
+## Cause
+Virus
