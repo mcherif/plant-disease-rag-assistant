@@ -35,6 +35,7 @@ No setup requiredâ€”just open the link and start exploring!
 - **Document retrieval**: Search and retrieve relevant information from a knowledge base.
 - **Conversational assistant**: Ask questions and receive context-aware, grounded answers.
 - **Hybrid retrieval**: Combines BM25 and vector search (FAISS) for robust results.
+- **Resilient indexing**: Automatically rebuilds an in-memory FAISS index from the bundled KB when the persisted artifacts are unavailable (helpful for fresh CI runs or git-lfs checkouts).
 - **APIs**: RESTful endpoints for integration and automation.
 - **Multi-UI support**: Streamlit (main), FastAPI backend, Gradio (deprecated)
 
@@ -189,7 +190,7 @@ python src/interface/app_gradio.py
 
 ### Web UIs
 
-- **Streamlit**: Main interface UI for image classification, RAG assisted search.
+- **Streamlit**: Main interface UI for image classification, RAG assisted search. The capture flow now keeps the camera controls and preview side-by-side, with the “natural light” tip shown only when the camera source is active.
 - See [docs/STREAMLIT.md](docs/STREAMLIT.md) for details.
 
 ## ðŸ“¸ Sample App Display
@@ -238,6 +239,10 @@ See [docs/retrieval.md](docs/retrieval.md) for building FAISS index, BM25, and h
 
 See [docs/testing.md](docs/testing.md) for running tests, OpenAI integration, and debugging tips.
 
+### FAISS fallback in CI/local clean checkouts
+
+Retrieval tests now succeed even when the binary FAISS artifacts are missing (for example, on GitHub Actions or after a fresh git-lfs checkout). If `meta.jsonl` or `faiss.index` cannot be read the pipeline rebuilds an in-memory index from `data/kb/kb.json` on the fly. Control this behaviour with the `RAG_ALLOW_FAISS_FALLBACK` environment variable (defaults to `1`). Leave it enabled for automated environments so `pytest` works out of the box.
+
 ## Supported Plants and Diseases
 
 This project supports image classification for a specific set of plants and their associated diseases. The full list is maintained in [`plant_diseases_table.csv`](plant_diseases_table.csv).
@@ -272,3 +277,9 @@ See [docs/improvements.md](docs/improvements.md) for prioritized backlog and tes
 ## License
 
 MIT
+
+
+
+
+
+
