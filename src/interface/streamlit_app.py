@@ -228,6 +228,8 @@ def _canon_disease(s: str) -> str:
         "pepper bacterial spot": "Bacterial spot",
     }
     key = s.lower()
+    if key.endswith(" healthy") or key == "healthy":
+        return "healthy"
     return aliases.get(key, re.sub(r"\s+", " ", s).strip())
 
 
@@ -247,7 +249,7 @@ def _infer_labels_from_classifier(raw: str):
     s = re.sub(r"[_\-]+", " ", str(raw)).strip()
     low = s.lower()
     plant_keys = ["peach", "tomato", "potato", "apple", "grape", "corn", "maize",
-                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "cherry"]
+                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "raspberry", "soybean", "cherry"]
     plant = None
     matched_key = None
     for k in plant_keys:
@@ -392,7 +394,7 @@ if image is not None:
         with torch.no_grad():
             logits = model(**inputs).logits
             probs = torch.softmax(logits, dim=-1).squeeze(0).cpu()
-            topk = min(5, probs.shape[-1])
+            topk = min(3, probs.shape[-1])
             scores, idxs = torch.topk(probs, topk)
 
     st.subheader("Top predictions")
@@ -416,6 +418,8 @@ if image is not None:
     ):
         st.session_state["detected_plant"] = plant_guess
         st.session_state["detected_disease"] = disease_guess
+        st.session_state["plant_input"] = plant_guess or ""
+        st.session_state["disease_input"] = disease_guess or ""
         st.session_state["force_rerun"] = not st.session_state.get(
             "force_rerun", False)
         st.rerun()
