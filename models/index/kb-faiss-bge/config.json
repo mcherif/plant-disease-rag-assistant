@@ -1,3 +1,12 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:d2b6c068e2c219fc1aa75e83e5060a5a318a8e5743fc8cdb12404118cac99c89
-size 310
+{
+  "manifest": "data\\kb\\manifest.parquet",
+  "out_dir": "models\\index\\kb-faiss-bge",
+  "model": "BAAI/bge-small-en-v1.5",
+  "num_vectors": 34,
+  "dim": 384,
+  "normalize": true,
+  "metric": "cosine (IP on normalized vectors)",
+  "device": "cpu",
+  "min_chars": 20,
+  "doc_prefix": "passage: "
+}

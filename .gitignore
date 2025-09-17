@@ -211,8 +211,7 @@ __marimo__/
 # Project data (not versioned)
 data/raw/
 data/processed/
-data/kb/
-!data/kb/kb.json
+data/kb/*\r\n!data/kb/kb.json\r\n!data/kb/kb.json
 data/plantvillage_kb.json
 !data/**/.gitkeep
 !data/README.md
@@ -221,12 +220,13 @@ checkpoints/
 mlruns/
 
 # Sample KB build artifacts
-data/sample_kb/*
-!data/sample_kb/README.md
+data/sample_kb/*\r\n!data/sample_kb/sample_kb.json
 !data/sample_kb/sample_kb.json
 models/index/*
+!models/index/kb-faiss-bge/
 !models/index/kb-faiss-bge/meta.jsonl
 !models/index/kb-faiss-bge/config.json
+!models/index/kb-faiss-bge/faiss.index
 
 # OS/IDE
 .DS_Store
@@ -237,10 +237,10 @@ data/disease_and_pests.html
 data/disease_and_pests/
 
 # Retrieval indexes (FAISS, metadata)
-models/index/
-!models/index/.gitkeep
 
 # Evaluation artifacts
 artifacts/
 !artifacts/.gitkeep
+
+
 
