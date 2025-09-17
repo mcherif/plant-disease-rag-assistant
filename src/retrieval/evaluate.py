@@ -146,16 +146,21 @@ def _load_meta_fallback(index_dir: Path) -> List[Dict]:
     try:
         raw = json.loads(kb_path.read_text(encoding="utf-8"))
     except Exception as err:  # noqa: BLE001
-        raise RuntimeError(f"Fallback KB data unavailable at {kb_path}") from err
+        warnings.warn(
+            f"[eval] Fallback KB not available at {kb_path}; using bundled sample KB.",
+            RuntimeWarning,
+        )
+        kb_path = _locate_fallback_kb(index_dir, sample_only=True)
+        raw = json.loads(kb_path.read_text(encoding="utf-8"))
     return [dict(row) for row in raw if isinstance(row, dict)]
 
 
-def _locate_fallback_kb(index_dir: Path) -> Path:
+def _locate_fallback_kb(index_dir: Path, sample_only: bool = False) -> Path:
     for base in [index_dir, *index_dir.parents]:
-        candidate = base / "data" / "kb" / "kb.json"
+        candidate = base / "data" / "kb" / ("sample_kb.json" if sample_only else "kb.json")
         if candidate.exists():
             return candidate
-    return Path("data/kb/kb.json")
+    return Path("data/sample_kb/sample_kb.json") if sample_only else Path("data/kb/sample_kb.json")
 
 
 def _hydrate_meta_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

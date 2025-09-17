@@ -1,0 +1,34 @@
+[
+  {
+    "doc_id": "sample-tylcv",
+    "url": "https://plantvillage.psu.edu/topics/tomato/infos",
+    "title": "Tomato - Tomato Yellow Leaf Curl Virus",
+    "plant": "Tomato",
+    "disease": "Tomato Yellow Leaf Curl Virus",
+    "section": null,
+    "lang": "en",
+    "crawl_date": "2024-01-01",
+    "split_idx": 0,
+    "text": "Tomato Yellow Leaf Curl Virus causes leaves to curl upward, yellowing, stunting, and fruit set issues. It spreads via whiteflies.",
+    "symptoms": "Leaves curl upward, yellowing of margins, stunted growth, reduced fruit set.",
+    "cause": "Virus transmitted by whiteflies.",
+    "management": "Use resistant varieties, remove infected plants, control whiteflies with sticky traps or insecticides.",
+    "prevention": "Plant resistant varieties and control vector populations."
+  },
+  {
+    "doc_id": "sample-powdery-mildew",
+    "url": "https://plantvillage.psu.edu/topics/cherry/infos",
+    "title": "Cherry - Powdery mildew",
+    "plant": "Cherry",
+    "disease": "Powdery mildew",
+    "section": null,
+    "lang": "en",
+    "crawl_date": "2024-01-01",
+    "split_idx": 0,
+    "text": "Powdery mildew appears as white powdery spots on leaves, especially on young growth. Over time leaves can distort and drop.",
+    "symptoms": "White powdery coating on leaves and shoots, leaf distortion, premature defoliation.",
+    "cause": "Fungus (Podosphaera clandestina).",
+    "management": "Prune to improve airflow, apply fungicides labelled for powdery mildew.",
+    "prevention": "Use resistant cultivars, avoid overhead irrigation, maintain canopy airflow."
+  }
+]

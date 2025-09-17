@@ -251,15 +251,22 @@ class RAGPipeline:
         try:
             raw = json.loads(kb_path.read_text(encoding="utf-8"))
         except Exception as err:  # noqa: BLE001
-            raise RuntimeError(f"Fallback KB data unavailable at {kb_path}") from err
+            warnings.warn(
+                f"[rag] Fallback KB not available at {kb_path}; using bundled sample KB.",
+                RuntimeWarning,
+            )
+            kb_path = self._locate_fallback_kb(sample_only=True)
+            raw = json.loads(kb_path.read_text(encoding="utf-8"))
         return [dict(row) for row in raw if isinstance(row, dict)]
 
-    def _locate_fallback_kb(self) -> Path:
-        for base in [self.index_dir, *self.index_dir.parents]:
-            candidate = base / "data" / "kb" / "kb.json"
+    def _locate_fallback_kb(self, sample_only: bool = False) -> Path:
+        search_roots = [self.index_dir, *self.index_dir.parents]
+        for base in search_roots:
+            candidate = base / "data" / "kb" / ("sample_kb.json" if sample_only else "kb.json")
             if candidate.exists():
                 return candidate
-        return Path("data/kb/kb.json")
+        # Last resort: project-relative lookup
+        return Path("data/sample_kb/sample_kb.json") if sample_only else Path("data/kb/sample_kb.json")
 
     def _hydrate_meta_rows(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         hydrated: List[Dict[str, Any]] = []

@@ -212,6 +212,7 @@ __marimo__/
 data/raw/
 data/processed/
 data/kb/
+!data/kb/kb.json
 data/plantvillage_kb.json
 !data/**/.gitkeep
 !data/README.md
@@ -222,7 +223,10 @@ mlruns/
 # Sample KB build artifacts
 data/sample_kb/*
 !data/sample_kb/README.md
+!data/sample_kb/sample_kb.json
 models/index/*
+!models/index/kb-faiss-bge/meta.jsonl
+!models/index/kb-faiss-bge/config.json
 
 # OS/IDE
 .DS_Store
@@ -239,3 +243,4 @@ models/index/
 # Evaluation artifacts
 artifacts/
 !artifacts/.gitkeep
+
