@@ -2,15 +2,11 @@
 
 # dev dependencies
 pywin32==310
-#only install pywinpty on Windows
+# only install pywinpty on Windows
 pywinpty==2.0.15; sys_platform == "win32"
 
-# this index URL for CUDA support
---extra-index-url https://download.pytorch.org/whl/cu118
-
-torch==2.1.0+cu118
-torchaudio==2.1.0+cu118
-torchvision==0.16.0+cu118
+# audio/test extras align with torch>=2.1
+torchaudio>=2.1.0
 
 # testing & tooling
 pytest>=7.0.0
