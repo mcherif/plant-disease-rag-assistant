@@ -7,11 +7,13 @@ beautifulsoup4
 chromadb
 faiss-cpu
 fastapi
+gradio
 matplotlib
 mlflow
 numpy<2.0
 pandas
 Pillow
+pydantic
 prefect
 requests
 scikit-learn
@@ -20,6 +22,7 @@ torch
 torchvision
 tqdm
 transformers
+urllib3
 uvicorn
 wikipedia
 
