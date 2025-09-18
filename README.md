@@ -190,7 +190,7 @@ python src/interface/app_gradio.py
 
 ### Web UIs
 
-- **Streamlit**: Main interface UI for image classification, RAG assisted search. The capture flow now keeps the camera controls and preview side-by-side, with the “natural light” tip shown only when the camera source is active.
+- **Streamlit**: Main interface UI for image classification, RAG assisted search. The capture flow now keeps the camera controls and preview side-by-side, with the "natural light" tip shown only when the camera source is active.
 - See [docs/STREAMLIT.md](docs/STREAMLIT.md) for details.
 
 ## ðŸ“¸ Sample App Display
