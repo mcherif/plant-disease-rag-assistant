@@ -41,6 +41,7 @@ PV_TOPIC_ALIASES = {
     "Corn (maize)": ["corn-maize", "maize", "corn"],
     "Cherry (including sour)": ["cherry-including-sour", "cherry"],
     "Pepper, bell": ["pepper-bell", "bell-pepper", "pepper"],
+    "Olive": ["olive"],
 }
 
 

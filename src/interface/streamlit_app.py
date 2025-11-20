@@ -34,7 +34,7 @@ DEBUG_MINIMAL = False  # set True to sanity-check Space/Container boot
 LOGO_PATH = "images/plant-disease-rag-assistant-logo.png"
 
 st.set_page_config(page_title="Plant Disease RAG Assistant", layout="wide")
-st.sidebar.image(LOGO_PATH, width="stretch")
+st.sidebar.image(LOGO_PATH)
 st.title("Plant Disease RAG Assistant")
 
 st.markdown(
@@ -107,6 +107,7 @@ def plant_icon(name: str) -> str:
         "squash": "🥒",
         "strawberry": "🍓",
         "tomato": "🍅",
+        "olive": "🫒",
     }
     # Remove 'maize' from display name for corn
     key = name.lower().replace(" (including sour)", "").replace(
@@ -159,7 +160,7 @@ render_supported_crops(current_detected)
 
 # Sidebar config (move this block up, before any function that uses MODEL_DIR)
 st.sidebar.header("Settings")
-MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned")
+MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned-15crops-41classes")
 index_dir = st.sidebar.text_input("Index dir", "models/index/kb-faiss-bge")
 top_k = st.sidebar.slider("Top-k context", 1, 6, 3)
 retrieval_device = st.sidebar.selectbox("Device", ["cpu", "cuda"], index=0)
@@ -253,7 +254,7 @@ def _infer_labels_from_classifier(raw: str):
     s = re.sub(r"[_\-]+", " ", str(raw)).strip()
     low = s.lower()
     plant_keys = ["peach", "tomato", "potato", "apple", "grape", "corn", "maize",
-                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "raspberry", "soybean", "squash", "cherry"]
+                  "pepper", "orange", "banana", "cucumber", "zucchini", "strawberry", "raspberry", "soybean", "squash", "cherry", "olive"]
     plant = None
     matched_key = None
     for k in plant_keys:
@@ -325,15 +326,20 @@ if DEBUG_MODE:
 
 def load_model_and_processor():
     processor = AutoImageProcessor.from_pretrained(MODEL_DIR, use_fast=True)
-    model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
     device = torch.device(retrieval_device)
+    # Force loading with actual weights (not meta tensors)
+    model = AutoModelForImageClassification.from_pretrained(
+        MODEL_DIR,
+        low_cpu_mem_usage=False,  # Disable lazy loading
+        torch_dtype=torch.float32
+    )
     model = model.to(device)
     return model, processor, device
 
 
 def id2label():
     # Load mapping from class_mapping.json
-    with open("models/vit-finetuned/class_mapping.json", "r") as f:
+    with open(f"{MODEL_DIR}/class_mapping.json", "r") as f:
         class_map = json.load(f)
     # Invert mapping: {index: class_name}
     mapping = {v: k for k, v in class_map.items()}
