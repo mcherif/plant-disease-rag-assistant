@@ -18,6 +18,11 @@ Author: Mohamed Cherif / innerloopinc@gmail.com
 """
 
 import os
+import sys
+
+# Add project root to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 import json
 import torch
 import streamlit as st
