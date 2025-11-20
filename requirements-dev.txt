@@ -7,6 +7,7 @@ pywinpty==2.0.15; sys_platform == "win32"
 
 # audio/test extras align with torch>=2.1
 torchaudio>=2.1.0
+torchvision>=0.16.0
 
 # testing & tooling
 pytest>=7.0.0
