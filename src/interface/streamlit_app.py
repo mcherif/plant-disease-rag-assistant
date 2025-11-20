@@ -168,7 +168,11 @@ st.sidebar.header("Settings")
 MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned-15crops-41classes")
 index_dir = st.sidebar.text_input("Index dir", "models/index/kb-faiss-bge")
 top_k = st.sidebar.slider("Top-k context", 1, 6, 3)
-retrieval_device = st.sidebar.selectbox("Device", ["cpu", "cuda"], index=0)
+# Only show CUDA as an option if it's actually available
+available_devices = ["cpu"]
+if torch.cuda.is_available():
+    available_devices.append("cuda")
+retrieval_device = st.sidebar.selectbox("Device", available_devices, index=0)
 model_env = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 st.sidebar.caption(f"Judge/LLM model (env): {model_env}")
 
