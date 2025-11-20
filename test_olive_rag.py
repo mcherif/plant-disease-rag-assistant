@@ -1,4 +1,15 @@
+import os
+from unittest.mock import MagicMock
 from src.llm.rag_pipeline import RAGPipeline, RetrievalConfig
+
+# Mock the _generate method to avoid OpenAI API key dependency in CI
+def mock_generate(self, prompt, model=None, **kwargs):
+    return "This is a mocked answer for testing purposes."
+
+# Apply mock if OPENAI_API_KEY is not set
+if not os.getenv("OPENAI_API_KEY"):
+    print("WARNING: OPENAI_API_KEY not set. Mocking LLM generation.")
+    RAGPipeline._generate = mock_generate
 
 cfg = RetrievalConfig(index_dir='models/index/kb-faiss-bge', top_k=3, device='cpu')
 rag = RAGPipeline(cfg)
