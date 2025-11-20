@@ -211,16 +211,18 @@ __marimo__/
 # Project data (not versioned)
 data/raw/
 data/processed/
-data/kb/*\r\n!data/kb/kb.json\r\n!data/kb/kb.json
+data/kb/*
+!data/kb/kb.json
 data/plantvillage_kb.json
 !data/**/.gitkeep
 !data/README.md
 checkpoints/
 .mlflow/
 mlruns/
+data/split/
 
 # Sample KB build artifacts
-data/sample_kb/*\r\n!data/sample_kb/sample_kb.json
+data/sample_kb/*
 !data/sample_kb/sample_kb.json
 models/index/*
 !models/index/kb-faiss-bge/
