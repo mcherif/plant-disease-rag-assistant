@@ -165,7 +165,7 @@ render_supported_crops(current_detected)
 
 # Sidebar config (move this block up, before any function that uses MODEL_DIR)
 st.sidebar.header("Settings")
-MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned-15crops-41classes")
+MODEL_DIR = st.sidebar.text_input("Model directory", "models/vit-finetuned")
 index_dir = st.sidebar.text_input("Index dir", "models/index/kb-faiss-bge")
 top_k = st.sidebar.slider("Top-k context", 1, 6, 3)
 # Only show CUDA as an option if it's actually available

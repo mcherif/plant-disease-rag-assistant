@@ -344,5 +344,28 @@
       "management": "",
       "html": ""
     }
+  },
+  "Olive": {
+    "Peacock spot": {
+      "description": "Leaves infected with Spilocaea oleagina, a fungal disease that causes black spots.",
+      "source": "https://www.kaggle.com/datasets/habibulbasher01644/olive-leaf-image-dataset",
+      "symptoms": "Black spots on leaves.",
+      "cause": "Spilocaea oleagina (fungus)",
+      "management": ""
+    },
+    "Aculus olearius": {
+      "description": "Leaves affected by olive gall mite, which leads to deformation and discoloration.",
+      "source": "https://www.kaggle.com/datasets/habibulbasher01644/olive-leaf-image-dataset",
+      "symptoms": "Deformation and discoloration of leaves.",
+      "cause": "Aculus olearius (mite)",
+      "management": ""
+    },
+    "healthy": {
+      "description": "Leaves without disease symptoms.",
+      "source": "https://www.kaggle.com/datasets/habibulbasher01644/olive-leaf-image-dataset",
+      "symptoms": "",
+      "cause": "",
+      "management": ""
+    }
   }
 }

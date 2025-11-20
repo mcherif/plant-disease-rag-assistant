@@ -1,0 +1,13 @@
+{
+    "name": "Mohamed Cherif",
+    "age": 27,
+    "skills": [
+        "Python",
+        "Machine Learning",
+        "Computer Vision"
+    ],
+    "location": {
+        "country": "Tunisia",
+        "city": "Tunis"
+    }
+}

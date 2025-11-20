@@ -1,7 +1,7 @@
 [
   {
     "idx": 0,
-    "doc_id": "417828a5-cbd4-4900-a98d-787ff50547d0",
+    "doc_id": "c9bf7182-39d4-41a2-a535-81f1f5271532",
     "plant": "Apple",
     "disease": "Apple scab",
     "title": "Apple — Apple scab",
@@ -16,7 +16,7 @@
   },
   {
     "idx": 1,
-    "doc_id": "be7602de-4884-469d-b95e-f9f92290bc90",
+    "doc_id": "b741c13e-f9a0-42fd-9324-3fd6410e0bbc",
     "plant": "Apple",
     "disease": "Black rot",
     "title": "Apple — Black rot",
@@ -31,7 +31,7 @@
   },
   {
     "idx": 2,
-    "doc_id": "28139361-9c31-466a-8491-ca5ba1423320",
+    "doc_id": "1b9a0681-079b-48ea-8a95-8aea544c425d",
     "plant": "Apple",
     "disease": "Cedar apple rust",
     "title": "Apple — Cedar apple rust",
@@ -46,7 +46,7 @@
   },
   {
     "idx": 3,
-    "doc_id": "10994eb9-3e4c-49f2-aa6f-4ce2d22a32ad",
+    "doc_id": "339b45fc-379e-4734-b7d5-0f41cf71f6fc",
     "plant": "Cherry (including sour)",
     "disease": "Powdery mildew",
     "title": "Cherry (including sour) — Powdery mildew",
@@ -61,7 +61,7 @@
   },
   {
     "idx": 4,
-    "doc_id": "99f52c68-748c-4261-88e7-142c8031a79d",
+    "doc_id": "81ff0d22-0e95-424a-8af5-9a66018cfcd1",
     "plant": "Corn (maize)",
     "disease": "Cercospora leaf spot Gray leaf spot",
     "title": "Corn (maize) — Cercospora leaf spot Gray leaf spot",
@@ -76,7 +76,7 @@
   },
   {
     "idx": 5,
-    "doc_id": "df576ed8-f80c-4c7c-a6a2-51c50627875e",
+    "doc_id": "92eed621-c1dd-4842-8cc1-29d3d687ebc2",
     "plant": "Corn (maize)",
     "disease": "Common rust",
     "title": "Corn (maize) — Common rust",
@@ -91,7 +91,7 @@
   },
   {
     "idx": 6,
-    "doc_id": "c016eb3c-99a5-4eae-bbbf-e37023f047b1",
+    "doc_id": "26b089fe-16f0-4ada-b0ea-29e6be90d5e5",
     "plant": "Corn (maize)",
     "disease": "Northern Leaf Blight",
     "title": "Corn (maize) — Northern Leaf Blight",
@@ -106,7 +106,7 @@
   },
   {
     "idx": 7,
-    "doc_id": "3ce02537-40e3-488a-bca8-ae500eefc3f3",
+    "doc_id": "2c3d7ab6-35b3-4d1c-a636-8b511ec053cb",
     "plant": "Grape",
     "disease": "Black rot",
     "title": "Grape — Black rot",
@@ -121,7 +121,7 @@
   },
   {
     "idx": 8,
-    "doc_id": "12248a43-4898-418f-99ad-6cd7968ff22a",
+    "doc_id": "0f0ee54f-a988-4e9a-8aef-b821b90e35e4",
     "plant": "Grape",
     "disease": "Esca (Black Measles)",
     "title": "Grape — Esca (Black Measles)",
@@ -136,7 +136,7 @@
   },
   {
     "idx": 9,
-    "doc_id": "86c6173a-ad7e-4862-a687-6e5a43f0baab",
+    "doc_id": "ad0d6a21-d449-4bb2-a1fe-0a774a6ac7fe",
     "plant": "Grape",
     "disease": "Leaf blight (Isariopsis Leaf Spot)",
     "title": "Grape — Leaf blight (Isariopsis Leaf Spot)",
@@ -151,7 +151,7 @@
   },
   {
     "idx": 10,
-    "doc_id": "1aabe030-d369-458f-bbd4-462825520faf",
+    "doc_id": "f74faa98-89e5-4f4c-b1f8-94d5bd2814cb",
     "plant": "Orange",
     "disease": "Haunglongbing (Citrus greening)",
     "title": "Orange — Haunglongbing (Citrus greening)",
@@ -166,7 +166,7 @@
   },
   {
     "idx": 11,
-    "doc_id": "63a9e3ee-ad1f-4e81-8bb4-bbdcd14acf7e",
+    "doc_id": "731d7cd7-d9d4-458f-927a-1eabd66733c3",
     "plant": "Peach",
     "disease": "Bacterial spot",
     "title": "Peach — Bacterial spot",
@@ -181,7 +181,7 @@
   },
   {
     "idx": 12,
-    "doc_id": "106ae4cf-dbd6-4b53-9ed5-f81be660b643",
+    "doc_id": "ee8abc1c-b5ae-4ff4-b63c-7f75f31878d1",
     "plant": "Potato",
     "disease": "Early blight",
     "title": "Potato — Early blight",
@@ -196,7 +196,7 @@
   },
   {
     "idx": 13,
-    "doc_id": "5b5a9257-acd3-442a-a5bc-7ff77c466f58",
+    "doc_id": "dace0519-1fe9-4d04-adf8-8fc9bfe8cef5",
     "plant": "Potato",
     "disease": "Late blight",
     "title": "Potato — Late blight",
@@ -211,7 +211,7 @@
   },
   {
     "idx": 14,
-    "doc_id": "26f25c50-9821-4e3c-beb7-3d308ee51f54",
+    "doc_id": "cd664afe-e14c-440e-af16-d517b54b3ef4",
     "plant": "Squash",
     "disease": "Powdery mildew",
     "title": "Squash — Powdery mildew",
@@ -226,7 +226,7 @@
   },
   {
     "idx": 15,
-    "doc_id": "ba425576-0755-4673-9c5d-c9b9400c960a",
+    "doc_id": "776d5e34-a92c-41ec-b602-c3c9679d6348",
     "plant": "Strawberry",
     "disease": "Leaf scorch",
     "title": "Strawberry — Leaf scorch",
@@ -241,7 +241,7 @@
   },
   {
     "idx": 16,
-    "doc_id": "85d3c101-3d65-4e6a-9f0f-63ae3d27532f",
+    "doc_id": "69ed9c79-f670-4752-b703-eb7da6636573",
     "plant": "Tomato",
     "disease": "Bacterial spot",
     "title": "Tomato — Bacterial spot",
@@ -256,7 +256,7 @@
   },
   {
     "idx": 17,
-    "doc_id": "f8960251-9913-48c7-beb9-1197122c882d",
+    "doc_id": "631c3c44-7fad-4170-8154-8fbacbc3c675",
     "plant": "Tomato",
     "disease": "Early blight",
     "title": "Tomato — Early blight",
@@ -271,7 +271,7 @@
   },
   {
     "idx": 18,
-    "doc_id": "bb7a0bbc-cc5c-4701-b003-e60d031bb169",
+    "doc_id": "becc3b86-326c-431d-866c-8b0dabd3f02a",
     "plant": "Tomato",
     "disease": "Late blight",
     "title": "Tomato — Late blight",
@@ -286,7 +286,7 @@
   },
   {
     "idx": 19,
-    "doc_id": "a505ab24-2781-4bbe-af3c-0a11f941af14",
+    "doc_id": "6a95ed96-f690-4b56-93d6-431a9f70b938",
     "plant": "Tomato",
     "disease": "Leaf Mold",
     "title": "Tomato — Leaf Mold",
@@ -301,7 +301,7 @@
   },
   {
     "idx": 20,
-    "doc_id": "1ba37560-d0f3-4d1d-9c23-79280e28863c",
+    "doc_id": "a44a587f-193e-49c8-9338-9d2b943a1bd0",
     "plant": "Tomato",
     "disease": "Septoria leaf spot",
     "title": "Tomato — Septoria leaf spot",
@@ -316,7 +316,7 @@
   },
   {
     "idx": 21,
-    "doc_id": "cccd7a7d-6c8d-4094-b7c7-0a95517cc426",
+    "doc_id": "8f9a53d4-5b6d-4f56-9bf3-5f01da73eaa6",
     "plant": "Tomato",
     "disease": "Spider mites Two-spotted spider mite",
     "title": "Tomato — Spider mites Two-spotted spider mite",
@@ -331,7 +331,7 @@
   },
   {
     "idx": 22,
-    "doc_id": "745542db-046c-4107-ba6c-e0764cc58f50",
+    "doc_id": "9942a475-67f1-4ebc-8ba2-c404ca82def4",
     "plant": "Tomato",
     "disease": "Target Spot",
     "title": "Tomato — Target Spot",
@@ -346,7 +346,7 @@
   },
   {
     "idx": 23,
-    "doc_id": "ee9537d0-bfd0-44b6-b15a-b6bafa3dc29c",
+    "doc_id": "b728ff49-a17a-45dd-9668-b01d93853ad6",
     "plant": "Tomato",
     "disease": "Tomato mosaic virus",
     "title": "Tomato — Tomato mosaic virus",
@@ -361,7 +361,7 @@
   },
   {
     "idx": 24,
-    "doc_id": "0f057fcf-c368-4193-b6ef-5d3239948f9a",
+    "doc_id": "74da5b22-8391-4875-a496-2bca4b6d248a",
     "plant": "Tomato",
     "disease": "Tomato Yellow Leaf Curl Virus",
     "title": "Tomato — Tomato Yellow Leaf Curl Virus",
@@ -376,11 +376,41 @@
   },
   {
     "idx": 25,
-    "doc_id": "5da59fc5-45bd-4b66-aefb-6580c8204971",
+    "doc_id": "9beef765-c70a-4d22-b8dd-9a04ca2b4606",
     "plant": "Pepper, bell",
     "disease": "Bacterial spot",
     "title": "Pepper, bell — Bacterial spot",
     "source": "https://plantvillage.psu.edu/topics/pepper-bell/infos",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 26,
+    "doc_id": "5f3676cb-30c9-41d2-b08c-ccb5a15fb5c4",
+    "plant": "Olive",
+    "disease": "Peacock spot",
+    "title": "Olive — Peacock spot",
+    "source": "https://www.kaggle.com/datasets/habibulbasher01644/olive-leaf-image-dataset",
+    "errors": [
+      "Missing or empty required field: section",
+      "Missing or empty required field: management",
+      "Missing or empty required field: split_idx",
+      "Missing or empty recommended field: prevention",
+      "Missing or empty recommended field: references"
+    ]
+  },
+  {
+    "idx": 27,
+    "doc_id": "dc58239b-9843-46f8-a2f1-2b48d5735785",
+    "plant": "Olive",
+    "disease": "Aculus olearius",
+    "title": "Olive — Aculus olearius",
+    "source": "https://www.kaggle.com/datasets/habibulbasher01644/olive-leaf-image-dataset",
     "errors": [
       "Missing or empty required field: section",
       "Missing or empty required field: management",
