@@ -1,0 +1,22 @@
+# Requirements for mobile model conversion scripts
+
+# Core ML frameworks
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.30.0
+tensorflow>=2.13.0
+onnx>=1.14.0
+onnx-tf>=1.10.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Data handling
+numpy<2.0
+pandas>=2.0.0
+
+# Sentence transformers for embedding model
+sentence-transformers>=2.7.0
+
+# SQLite vector extension (will need manual compilation for Android)
+# Note: sqlite-vec requires compilation, see prepare_kb_sqlite.py

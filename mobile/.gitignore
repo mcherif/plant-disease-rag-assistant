@@ -1,0 +1,40 @@
+# Mobile project gitignore
+
+# Converted models and assets (too large for git)
+assets/*.onnx*
+assets/*.tflite
+assets/*.db
+assets/*.onnx
+assets/*_saved_model/
+
+# Intermediate conversion files
+scripts/*.onnx
+scripts/*_saved_model/
+scripts/__pycache__/
+scripts/*.pyc
+
+# Android build outputs
+android/app/build/
+android/app/release/
+android/app/debug/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/*.iml
+android/.DS_Store
+
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

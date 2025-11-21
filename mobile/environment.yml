@@ -1,0 +1,37 @@
+# Conda environment for mobile model conversion
+# Create with: conda env create -f environment.yml
+# Activate with: conda activate plant-disease-mobile
+
+name: plant-disease-mobile
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+  - pip>=23.0
+  
+  # Core ML frameworks
+  - pytorch>=2.1.0
+  - torchvision>=0.16.0
+  - tensorflow>=2.13.0
+  
+  # Image processing
+  - pillow>=10.0.0
+  
+  # Data handling
+  - numpy<2.0
+  - pandas>=2.0.0
+  
+  # Development tools
+  - jupyter
+  - ipython
+  
+  # Pip dependencies (not available via conda or better via pip)
+  - pip:
+      - transformers>=4.30.0
+      - onnx>=1.14.0
+      - onnx-tf>=1.10.0
+      - sentence-transformers>=2.7.0
+      - safetensors>=0.4.0
