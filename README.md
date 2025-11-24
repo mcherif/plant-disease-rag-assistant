@@ -132,6 +132,11 @@ $env:OPENAI_API_KEY="sk-..."  # Windows PowerShell
 streamlit run src/interface/streamlit_app.py
 ```
 
+### Mobile quantized model (ExecuTorch)
+
+- ExecuTorch/XNNPACK quantized ViT (~82 MB `.pte`) for on-device CPU inference.
+- See `docs/mobile_executorch.md` for export steps, desktop validation, and Android integration notes.
+
 ---
 
 ## 🐳 Docker Deployment
@@ -449,7 +454,7 @@ For CUDA GPU acceleration:
 See [docs/improvements.md](docs/improvements.md) for prioritized backlog, feature ideas, and test plans.
 
 **Upcoming**:
-- [ ] Mobile app deployment (TensorFlow Lite conversion)
+- [ ] Mobile app deployment (ExecuTorch/NNAPI experiments)
 - [ ] Multilingual support
 - [ ] Real-time disease monitoring
 - [ ] Integration with agricultural IoT sensors
