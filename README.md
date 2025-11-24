@@ -163,64 +163,19 @@ This launches the Streamlit UI at [http://localhost:8501](http://localhost:8501)
 
 ```
 plant-disease-rag-assistant/
-│
-├── README.md                  # Project overview, setup, usage, and documentation links
-├── docker-compose.yml         # Multi-container orchestration for API and UI services
-├── requirements.txt           # Python dependencies for the project
-├── requirements-dev.txt       # Development dependencies (testing, tooling)
-├── .env.example               # Example environment variables for local/dev setup
-├── Makefile                   # Common build, run, and test commands
-├── plant_diseases_table.csv   # Complete list of supported plants and diseases
-│
-├── data/
-│   ├── raw/                   # Unprocessed source datasets (images, docs, etc.)
-│   ├── processed/             # Cleaned/normalized data ready for ingestion
-│   ├── kb/                    # Final knowledge base files (JSON, chunks, embeddings)
-│   ├── plantvillage_kb.json   # PlantVillage disease information seeds
-│   └── sample_kb/             # Tiny sample KB for quick demos and cloud deployment
-│
-├── models/
-│   ├── vit-finetuned-15crops-41classes/  # Fine-tuned Vision Transformer model
-│   └── index/                             # FAISS and BM25 retrieval indexes
-│       └── kb-faiss-bge/                  # BGE embeddings with FAISS index
-│
-├── notebooks/
-│   ├── 01_classifier_review.ipynb   # EDA and review of image classifier results
-│   ├── 02_doc_ingestion.ipynb       # KB ingestion and document processing experiments
-│   └── 03_rag_experiments.ipynb     # RAG pipeline and retrieval experiments
-│
-├── src/
-│   ├── classifier/            # Image classification models and utilities
-│   ├── training/              # Model training scripts (train_vit.py, etc.)
-│   ├── ingestion/             # Scripts for scraping, cleaning, and building the KB
-│   │   ├── build_kb.py                # Main ingestion: collect, chunk, normalize, deduplicate
-│   │   ├── refresh_kb_descriptions.py # Enrichment: update KB by scraping PlantVillage
-│   │   ├── import_dataset_plants.py   # Import external datasets
-│   │   ├── validate_kb_urls.py        # Validate KB URLs
-│   │   ├── scrape_plantvillage_infos.py # Scraper for PlantVillage pages
-│   │   └── ...                        # Other helpers/utilities
-│   ├── retrieval/             # BM25, FAISS, and hybrid retrieval logic
-│   ├── llm/                   # RAG pipeline, LLM integration, and prompt logic
-│   │   └── rag_pipeline.py    # Main RAG orchestration
-│   ├── monitoring/            # Logging, metrics, and health checks
-│   └── interface/
-│       ├── streamlit_app.py   # Main Streamlit UI (recommended)
-│       ├── app_gradio.py      # Gradio UI (deprecated, use Streamlit)
-│       └── api.py             # FastAPI backend for RESTful endpoints
-│
-├── scripts/                   # Utility scripts for training, data processing, etc.
-├── tests/
-│   └── test_retrieval.py      # Unit tests for retrieval and RAG pipeline
-│
-└── docs/
-    ├── architecture.png       # System architecture diagram
-    ├── project_plan.md        # Project goals, milestones, and planning notes
-    ├── STREAMLIT.md           # Streamlit UI usage and customization guide
-    ├── data_card.md           # Dataset sources, build steps, and limitations
-    ├── retrieval.md           # Retrieval pipeline documentation
-    ├── testing.md             # Testing and debugging instructions
-    ├── improvements.md        # Roadmap, backlog, and enhancement ideas
-    └── artifacts.md           # Evaluation results and experiment artifacts
+├── README.md                  # Project overview and quick start
+├── requirements*.txt          # Dependencies (core + dev)
+├── docker-compose.yml         # Local orchestration
+├── Makefile                   # Common commands
+├── data/                      # Datasets and KB artifacts
+├── models/                    # Fine-tuned ViT and indexes
+├── mobile/                    # Mobile exports/scripts/assets (ExecuTorch, ONNX, etc.)
+│   └── assets/                # Quantized models (e.g., vit_int8_executorch_qnnpack.pte)
+├── notebooks/                 # EDA and experimentation
+├── src/                       # App, classifier, ingestion, retrieval, LLM, interfaces
+├── scripts/                   # Utility scripts
+├── tests/                     # Unit tests
+└── docs/                      # Documentation (incl. docs/mobile_executorch.md)
 ```
 
 ---
