@@ -19,6 +19,7 @@ Author: Mohamed Cherif / innerloopinc@gmail.com
 
 import os
 import sys
+from pathlib import Path
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -83,7 +84,21 @@ st.markdown(
 
 def load_supported_crops():
     # Reads the plant names from the CSV file
-    df = pd.read_csv("plant_diseases_table.csv")
+    here = Path(__file__).resolve().parents[2]
+    candidates = [
+        here / "plant_diseases_table.csv",
+        here / "data" / "plant_diseases_table.csv",
+    ]
+    csv_path = None
+    for c in candidates:
+        if c.exists():
+            csv_path = c
+            break
+    if csv_path is None:
+        raise FileNotFoundError(
+            "plant_diseases_table.csv not found. Expected at project root or data/plant_diseases_table.csv"
+        )
+    df = pd.read_csv(csv_path)
     # Find the column name for plants (case-insensitive)
     plant_col = None
     for col in df.columns:
