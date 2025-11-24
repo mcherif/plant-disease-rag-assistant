@@ -112,6 +112,15 @@ def load_supported_crops():
     return [str(x).strip() for x in df[plant_col].dropna().unique()]
 
 
+def _render_source_line(idx: int, meta: dict, fallback_text: str | None = None):
+    """Render a single source with optional hyperlink if URL is present."""
+    title = meta.get("title") or meta.get("doc_id") or fallback_text or f"Doc {idx}"
+    url = meta.get("url")
+    if url:
+        return f"[{idx}] [{title}]({url})"
+    return f"[{idx}] {title}"
+
+
 def plant_icon(name: str) -> str:
     icons = {
         "apple": "🍎",
@@ -582,13 +591,8 @@ if st.session_state.get("last_answer"):
             if retrieved:
                 for i, doc in enumerate(retrieved, start=1):
                     meta = doc.get("meta", {})
-                    title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
-                    url = meta.get("url")
-                    bullet = f"[{i}] {title}"
-                    if url:
-                        st.markdown(f"{bullet} - [{url}]({url})")
-                    else:
-                        st.write(bullet)
+                    line = _render_source_line(i, meta)
+                    st.markdown(line, unsafe_allow_html=True)
             else:
                 st.info("No sources were retrieved for the previous answer.")
     else:
@@ -600,10 +604,9 @@ if st.session_state.get("last_answer"):
             for i, doc in enumerate(retrieved, start=1):
                 meta = doc.get("meta", {})
                 title = meta.get("title") or meta.get("doc_id") or f"Doc {i}"
-                url = meta.get("url")
                 with st.expander(f"[{i}] {title}"):
-                    if url:
-                        st.markdown(f"[{url}]({url})")
+                    line = _render_source_line(i, meta, fallback_text=title)
+                    st.markdown(line, unsafe_allow_html=True)
                     st.write(meta.get("text", "")[:1200])
         else:
             st.info("No sources retrieved.")
