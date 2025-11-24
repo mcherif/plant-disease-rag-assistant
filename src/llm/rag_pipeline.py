@@ -286,6 +286,8 @@ class RAGPipeline:
             for key in ("title", "plant", "disease", "url", "doc_id"):
                 if key in item and item[key] is not None:
                     item[key] = str(item[key])
+            if not item.get("disease") and item.get("title"):
+                item["disease"] = item["title"]
             self._ensure_text(item)
             hydrated.append(item)
         if not hydrated:
@@ -414,6 +416,19 @@ class RAGPipeline:
                 continue
             if disease and not _is_match(query_disease, meta_disease):
                 continue
+            # If caller provided plant/disease and meta is missing, fill for downstream checks
+            if plant and not meta.get("plant"):
+                meta = dict(meta)
+                meta["plant"] = plant
+                self.meta[idx] = meta
+            if disease and not self.meta[idx].get("disease"):
+                meta = dict(self.meta[idx])
+                meta["disease"] = disease
+                self.meta[idx] = meta
+            if not self.meta[idx].get("disease"):
+                meta = dict(self.meta[idx])
+                meta["disease"] = query
+                self.meta[idx] = meta
             results.append((float(s), int(idx)))
             if len(results) >= k:
                 break
@@ -570,8 +585,8 @@ class RAGPipeline:
             - sources[n-1]["id"] equals citation index [n] used in the answer.
             - retrieved[i]["meta"] is an element from meta.jsonl (unchanged).
         """
-        # Retrieve
-        k = top_k or self.cfg.top_k
+        # Retrieve (respect explicit 0)
+        k = self.cfg.top_k if top_k is None else int(top_k)
         hits: List[Tuple[float, int]] = self._retrieve(
             query=query, plant=plant, disease=disease, top_k=k, fusion=fusion, alpha=alpha
         )
@@ -600,7 +615,7 @@ class RAGPipeline:
         # Guardrail: if no context (or explicitly requested top_k=0), refuse without calling LLM
         if (k <= 0) or (not hits):
             refusal = (
-                "I don’t have enough relevant context to answer this. "
+                "I don't have enough relevant context to answer this. "
                 "Please provide more details or try a different question."
             )
             return {"answer": refusal, "sources": [], "retrieved": []}
@@ -638,12 +653,20 @@ class RAGPipeline:
             answer = (answer or "").rstrip() + " [1]"
 
         # Shape outputs for UI
-        retrieved = [{"score": float(s), "meta": self.meta[idx]}
-                     for s, idx in hits]
+        retrieved = []
+        for s, idx in hits:
+            meta = dict(self.meta[idx])
+            if plant and not meta.get("plant"):
+                meta["plant"] = plant
+            if disease and not meta.get("disease"):
+                meta["disease"] = disease
+            retrieved.append({"score": float(s), "meta": meta})
         sources = [{
             "id": i + 1,
-            "title": self.meta[idx].get("title") or self.meta[idx].get("disease") or "Source",
-            "url": self.meta[idx].get("url", ""),
+            "title": retrieved[i]["meta"].get("title")
+            or retrieved[i]["meta"].get("disease")
+            or "Source",
+            "url": retrieved[i]["meta"].get("url", ""),
         } for i, (_, idx) in enumerate(hits)]
 
         return {"answer": answer, "retrieved": retrieved, "sources": sources}

@@ -37,10 +37,15 @@ import pytest
 import tempfile
 from collections import Counter
 from torch.utils.data import DataLoader
-from torchvision.datasets import ImageFolder
-from torchvision.transforms import Lambda, Compose, Resize
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 from sklearn.metrics import accuracy_score, f1_score
+
+try:
+    from torchvision.datasets import ImageFolder
+    from torchvision.transforms import Lambda, Compose, Resize
+    TORCHVISION_AVAILABLE = True
+except ImportError:
+    TORCHVISION_AVAILABLE = False
 
 # === Config ===
 MODEL_DIR = "models/vit-finetuned"
@@ -53,6 +58,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 @pytest.mark.skipif(
     not os.path.exists(os.path.join(MODEL_DIR, "pytorch_model.bin")),
     reason="Model not found — skipping evaluation test in CI"
+)
+@pytest.mark.skipif(
+    not TORCHVISION_AVAILABLE,
+    reason="torchvision not installed"
 )
 def test_model_evaluation_pipeline():
     # Setup MLflow tracking URI
