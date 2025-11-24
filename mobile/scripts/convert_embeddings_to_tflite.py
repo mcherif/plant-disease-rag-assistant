@@ -190,7 +190,7 @@ def main():
     model = load_sentence_transformer(args.model)
     
     # Step 2: Export to SavedModel
-    tokenizer = export_to_saved_model(model, saved_model_path)
+    export_to_saved_model(model, saved_model_path)
     
     # Step 3: Convert to TFLite
     convert_to_tflite(saved_model_path, tflite_path, model, quantize=not args.no_quantize)
