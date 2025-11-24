@@ -1,0 +1,2 @@
+rootProject.name = "PlantDiseaseMobile"
+include(":app")
