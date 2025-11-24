@@ -59,23 +59,23 @@ def analyze_images(directory, class_name, sample_count=10):
             print(f"Error processing {img_path.name}: {e}")
     
     # Summary statistics
-    print(f"\nResolution Range:")
+    print("\nResolution Range:")
     unique_resolutions = set(resolutions)
     for res in sorted(unique_resolutions):
         count = resolutions.count(res)
         print(f"  {res[0]}x{res[1]}: {count} images")
     
-    print(f"\nColor Modes:")
+    print("\nColor Modes:")
     for mode in set(modes):
         count = modes.count(mode)
         print(f"  {mode}: {count} images")
     
-    print(f"\nFile Sizes:")
+    print("\nFile Sizes:")
     print(f"  Min: {min(file_sizes):,} bytes ({min(file_sizes)/1024:.1f} KB)")
     print(f"  Max: {max(file_sizes):,} bytes ({max(file_sizes)/1024:.1f} KB)")
     print(f"  Avg: {np.mean(file_sizes):,.0f} bytes ({np.mean(file_sizes)/1024:.1f} KB)")
     
-    print(f"\nPixel Value Statistics (0-255):")
+    print("\nPixel Value Statistics (0-255):")
     print(f"  Mean: {np.mean(mean_pixels):.2f} ± {np.std(mean_pixels):.2f}")
     print(f"  Std Dev: {np.mean(std_pixels):.2f} ± {np.std(std_pixels):.2f}")
 

@@ -198,7 +198,7 @@ with mlflow.start_run():
     if not all_good:
         raise RuntimeError("Model save verification FAILED! Some files are missing or too small.")
     
-    print(f"\n✓ All files verified successfully!")
+    print("\n✓ All files verified successfully!")
     print(f"Model saved to: {model_save_path}")
     print(f"Classes: {num_classes}, Crops: {num_crops}")
     

@@ -13,11 +13,10 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import sqlite3
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List
 
 import numpy as np
 import pandas as pd

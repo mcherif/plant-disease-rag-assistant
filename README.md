@@ -178,6 +178,17 @@ plant-disease-rag-assistant/
 └── docs/                      # Documentation (incl. docs/mobile_executorch.md)
 ```
 
+### Knowledge base and hyperlinks
+
+- KB artifacts live in `data/kb/` (chunks + manifest) and the FAISS index in `models/index/kb-faiss-bge/`.
+- The Streamlit “Sources” list renders clickable links when `meta.jsonl` contains non-empty URLs.
+- To rebuild the PlantVillage KB (with URLs) and refresh the index:
+  ```bash
+  python -m src.ingestion.build_kb --sources plantvillage --out data/kb --min_tokens 20 --max_tokens 400 --overlap 40 --dedup none --verbose
+  python -m src.retrieval.build_index --manifest data/kb/manifest.parquet --out models/index/kb-faiss-bge --model BAAI/bge-small-en-v1.5 --device cpu --batch-size 8
+  ```
+- Restart Streamlit after rebuilding so it picks up the updated metadata and renders hyperlinks.
+
 ---
 
 ## 🌐 API Endpoints

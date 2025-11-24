@@ -5,7 +5,6 @@ Best-effort sanity check for vit_int8_executorch_qnnpack.pte.
   (Many pip builds omit the Python ExecutionSession; in that case we just report it.)
 """
 
-import os
 from pathlib import Path
 
 import numpy as np

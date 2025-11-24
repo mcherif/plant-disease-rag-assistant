@@ -34,14 +34,14 @@ def test_image(image_path, expected_class):
         probs = torch.softmax(outputs.logits, dim=1)[0]
         top_5 = torch.topk(probs, 5)
     
-    print(f"  Top 5 predictions:")
+    print("  Top 5 predictions:")
     for prob, idx in zip(top_5.values, top_5.indices):
         class_name = idx_to_class[idx.item()]
         print(f"    {class_name}: {prob.item():.4f}")
     
     top_pred = idx_to_class[top_5.indices[0].item()]
     if expected_class in top_pred:
-        print(f"  ✅ CORRECT!")
+        print("  ✅ CORRECT!")
     else:
         print(f"  ❌ WRONG! (expected {expected_class})")
 

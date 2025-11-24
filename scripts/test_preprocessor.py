@@ -3,8 +3,6 @@ Test script to verify how the ViT preprocessor handles different image resolutio
 """
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 from PIL import Image
-import torch
-import numpy as np
 
 MODEL_DIR = "models/vit-finetuned-15crops-41classes"
 
@@ -13,7 +11,7 @@ processor = AutoImageProcessor.from_pretrained(MODEL_DIR)
 model = AutoModelForImageClassification.from_pretrained(MODEL_DIR)
 model.eval()
 
-print(f"Preprocessor Configuration:")
+print("Preprocessor Configuration:")
 print(f"  size: {processor.size}")
 print(f"  do_resize: {processor.do_resize}")
 print(f"  do_normalize: {processor.do_normalize}")

@@ -12,9 +12,7 @@ import argparse
 import logging
 from pathlib import Path
 
-import numpy as np
 import torch
-from PIL import Image
 from transformers import ViTForImageClassification, ViTImageProcessor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

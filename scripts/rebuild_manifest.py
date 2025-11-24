@@ -3,7 +3,6 @@ Quick script to create manifest.parquet from existing chunks/ directory.
 This bypasses the full build_kb pipeline which is failing on Olive data.
 """
 
-import json
 from pathlib import Path
 import pandas as pd
 
@@ -52,5 +51,5 @@ df.to_parquet(output_path, index=False)
 
 print(f"✅ Saved manifest to {output_path}")
 print(f"   Total chunks: {len(df)}")
-print(f"   Sample:")
+print("   Sample:")
 print(df[['plant', 'disease', 'n_tokens']].head(10))

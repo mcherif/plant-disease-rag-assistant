@@ -14,7 +14,6 @@ import torch
 from PIL import Image
 from transformers import ViTForImageClassification, ViTImageProcessor
 
-import executorch.exir as exir
 from executorch.exir import EdgeCompileConfig, to_edge_transform_and_lower
 from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
     XnnpackPartitioner,
