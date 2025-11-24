@@ -136,6 +136,7 @@ streamlit run src/interface/streamlit_app.py
 
 - ExecuTorch/XNNPACK quantized ViT (~82 MB `.pte`) for on-device CPU inference.
 - See `docs/mobile_executorch.md` for export steps, desktop validation, and Android integration notes.
+- See `docs/mobile_android_app.md` for a minimal on-device demo app (Compose UI, ExecuTorch).
 
 ---
 
