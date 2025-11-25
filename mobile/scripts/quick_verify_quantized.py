@@ -1,16 +1,18 @@
 """
-Quick verification of PyTorch quantized model on a small sample
-Tests on 20 images to get fast feedback
+Quick verification of PyTorch quantized model on a small sample.
+Tests on 20 images to get fast feedback.
 """
 
-import torch
-from transformers import ViTForImageClassification, ViTImageProcessor
-from pathlib import Path
-from PIL import Image
-import numpy as np
+import argparse
 import json
-import time
 import random
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+from PIL import Image
+from transformers import ViTForImageClassification, ViTImageProcessor
 
 print("=" * 70)
 print("Quick PyTorch Quantized Model Verification (Sample)")
@@ -18,11 +20,12 @@ print("=" * 70)
 print()
 
 # Paths
-model_dir = Path("models/vit-finetuned")
-val_dir = Path("data/split/val")
+root = Path(__file__).resolve().parents[2]
+model_dir = root / "models" / "vit-finetuned"
+val_dir = root / "data" / "split" / "val"
 
 # Load models
-print("📦 Loading models...")
+print("[*] Loading models...")
 original_model = ViTForImageClassification.from_pretrained(str(model_dir))
 processor = ViTImageProcessor.from_pretrained(str(model_dir))
 original_model.eval()
@@ -32,23 +35,25 @@ quantized_model.eval()
 quantized_model = torch.quantization.quantize_dynamic(
     quantized_model, {torch.nn.Linear}, dtype=torch.qint8
 )
-print("✅ Models loaded")
+print("[OK] Models loaded")
 print()
 
 # Get class mapping
 with open(model_dir / "class_mapping.json", "r") as f:
     class_mapping = json.load(f)
+idx_to_class = [k for k, v in sorted(class_mapping.items(), key=lambda kv: kv[1])]
+class_to_idx = {name: idx for idx, name in enumerate(idx_to_class)}
 
 # Collect sample images (50 images, ~1-2 per class)
-print("📁 Collecting sample images...")
+print("[*] Collecting sample images...")
 val_images = []
 val_labels = []
 
-for class_idx, (class_name, _) in enumerate(class_mapping.items()):
+for class_idx, class_name in enumerate(idx_to_class):
     class_dir = val_dir / class_name
     if not class_dir.exists():
         continue
-    
+
     images = list(class_dir.glob("*.JPG"))
     # Take 1-2 images per class
     sample = random.sample(images, min(2, len(images)))
@@ -62,11 +67,11 @@ if len(val_images) > 20:
     val_images = [val_images[i] for i in indices]
     val_labels = [val_labels[i] for i in indices]
 
-print(f"✅ Testing on {len(val_images)} sample images")
+print(f"[OK] Testing on {len(val_images)} sample images")
 print()
 
 # Run verification
-print("🔄 Running verification...")
+print("[*] Running verification...")
 original_correct = 0
 quantized_correct = 0
 top3_original_correct = 0
@@ -75,18 +80,20 @@ latencies_original = []
 latencies_quantized = []
 cosine_similarities = []
 
+
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 
 with torch.no_grad():
     for i, (img_path, true_label) in enumerate(zip(val_images, val_labels)):
         if (i + 1) % 10 == 0:
             print(f"  Processed {i + 1}/{len(val_images)} images...")
-        
+
         # Load and preprocess
         image = Image.open(img_path).convert("RGB")
         inputs = processor(images=image, return_tensors="pt")
-        
+
         # Original model
         start = time.time()
         original_outputs = original_model(**inputs)
@@ -94,7 +101,7 @@ with torch.no_grad():
         original_logits = original_outputs.logits[0].numpy()
         original_pred = original_logits.argmax()
         original_top3 = np.argsort(original_logits)[-3:][::-1]
-        
+
         # Quantized model
         start = time.time()
         quantized_outputs = quantized_model(**inputs)
@@ -102,7 +109,7 @@ with torch.no_grad():
         quantized_logits = quantized_outputs.logits[0].numpy()
         quantized_pred = quantized_logits.argmax()
         quantized_top3 = np.argsort(quantized_logits)[-3:][::-1]
-        
+
         # Metrics
         if original_pred == true_label:
             original_correct += 1
@@ -112,7 +119,7 @@ with torch.no_grad():
             top3_original_correct += 1
         if true_label in quantized_top3:
             top3_quantized_correct += 1
-        
+
         similarity = cosine_similarity(original_logits, quantized_logits)
         cosine_similarities.append(similarity)
 
@@ -130,7 +137,7 @@ avg_latency_quantized = np.mean(latencies_quantized) * 1000
 speedup = avg_latency_original / avg_latency_quantized
 
 print("=" * 70)
-print("📊 QUICK VERIFICATION RESULTS (Sample)")
+print("QUICK VERIFICATION RESULTS (Sample)")
 print("=" * 70)
 print()
 print(f"Sample size: {total} images")
@@ -158,14 +165,36 @@ print()
 # Verdict
 print("=" * 70)
 if quantized_top1_acc >= original_top1_acc - 5.0 and avg_similarity > 0.95:
-    print("✅ SAMPLE VERIFICATION SUCCESSFUL!")
+    print("[OK] SAMPLE VERIFICATION SUCCESSFUL!")
     print("   Quantization looks good. Full validation recommended.")
 elif quantized_top1_acc >= original_top1_acc - 10.0 and avg_similarity > 0.90:
-    print("⚠️  SAMPLE VERIFICATION ACCEPTABLE")
+    print("[WARN] SAMPLE VERIFICATION ACCEPTABLE")
     print("   Some accuracy loss. Full validation needed.")
 else:
-    print("❌ SAMPLE VERIFICATION CONCERNING")
+    print("[FAIL] SAMPLE VERIFICATION CONCERNING")
     print("   Significant issues detected. Review needed.")
 print("=" * 70)
 print()
 print("Note: This is a small sample. Run full validation for final results.")
+
+# Optional single-image check
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument("--image", type=str, help="Run a single image through FP32 and INT8 and print top-3")
+args, _ = parser.parse_known_args()
+
+if args.image:
+    img_path = Path(args.image)
+    if img_path.exists():
+        print("\n[*] Single image check:", img_path)
+        image = Image.open(img_path).convert("RGB")
+        inputs = processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            fp_logits = original_model(**inputs).logits[0].numpy()
+            int8_logits = quantized_model(**inputs).logits[0].numpy()
+        def top3(logits):
+            idxs = np.argsort(logits)[-3:][::-1]
+            return [(idx_to_class[i], float(logits[i])) for i in idxs]
+        print("  FP32 top-3:", top3(fp_logits))
+        print("  INT8 top-3:", top3(int8_logits))
+    else:
+        print(f"[WARN] --image path not found: {img_path}")

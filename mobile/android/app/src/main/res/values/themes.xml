@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Material 3 theme colors -->
     <style name="Theme.PlantDiseaseMobile" parent="Theme.Material3.Light.NoActionBar">
-        <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <!-- M3 keys -->
+        <item name="colorPrimary">@color/teal_bright</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorPrimaryContainer">@color/teal_deep</item>
+        <item name="colorOnPrimaryContainer">@android:color/white</item>
+        <item name="colorSecondary">@color/teal_soft</item>
+        <item name="colorOnSecondary">@android:color/black</item>
+        <item name="android:statusBarColor">@color/teal_deep</item>
         <item name="android:navigationBarColor">@color/teal_deep</item>
+        <!-- Android 12+ splash screen -->
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <!-- Fallbacks for legacy attrs -->
+        <item name="colorPrimaryVariant">@color/teal_deep</item>
+        <item name="colorAccent">@color/teal_bright</item>
     </style>
 </resources>
