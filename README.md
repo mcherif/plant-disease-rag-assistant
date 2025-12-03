@@ -160,6 +160,13 @@ If you are on Windows PowerShell:
 - After `assembleRelease`, a friendly copy is saved as `mobile/android/app/build/outputs/apk/release/plant-disease-mobile-release.apk`. This is the signed release you can distribute.
 - To generate a QR for a hosted APK URL: `pip install qrcode[pil]` then `python scripts/generate_apk_qr.py --url https://your-hosted-url/plant-disease-mobile-release.apk`.
 
+### Download (Release APK)
+
+- Direct link: https://github.com/mcherif/plant-disease-rag-assistant/releases/download/v1.0/plant-disease-mobile-release.apk
+- QR (scan on device to download):
+
+<img src="apk_download_qr.png" alt="APK QR" width="200"/>
+
 ---
 
 ## 🐳 Docker Deployment
