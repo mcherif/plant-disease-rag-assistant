@@ -163,9 +163,7 @@ If you are on Windows PowerShell:
 ### Download (Release APK)
 
 - Direct link: https://github.com/mcherif/plant-disease-rag-assistant/releases/download/v1.0/plant-disease-mobile-release.apk
-- QR (scan on device to download):
-
-<img src="apk_download_qr.png" alt="APK QR" width="200"/>
+- QR (scan on device to download): `mobile/android/apk_download_qr.png` (or view via the release page). If you embed it, keep it small, e.g. `<img src="mobile/android/apk_download_qr.png" width="140" alt="APK QR"/>`.
 
 ---
 
