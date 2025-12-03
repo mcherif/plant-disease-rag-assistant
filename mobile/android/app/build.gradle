@@ -101,6 +101,19 @@ afterEvaluate {
                 } else {
                     apks.each { println "APK artifact: ${it}" }
                 }
+                if (variant == "Debug") {
+                    // Also write a friendly-named copy for distribution
+                    def src = file("$buildDir/outputs/apk/debug/app-debug.apk")
+                    if (src.exists()) {
+                        def dest = file("$buildDir/outputs/apk/debug/plant-disease-mobile-debug.apk")
+                        copy {
+                            from src
+                            into dest.parentFile
+                            rename { dest.name }
+                        }
+                        println "Renamed APK copy: ${dest}"
+                    }
+                }
             }
         }
     }

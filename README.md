@@ -155,6 +155,8 @@ If you are on Windows PowerShell:
 ```powershell
 & "$Env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r "mobile/android/app/build/outputs/apk/debug/app-debug.apk"
 ```
+- After `./gradlew assembleDebug`, a copy is saved as `mobile/android/app/build/outputs/apk/debug/plant-disease-mobile-debug.apk` for easier sharing. The build log prints the exact path.
+- To build a release APK: `cd mobile/android && ./gradlew assembleRelease` (configure signing first). The artifact will be under `app/build/outputs/apk/release/`.
 
 ---
 
