@@ -157,6 +157,8 @@ If you are on Windows PowerShell:
 ```
 - After `./gradlew assembleDebug`, a copy is saved as `mobile/android/app/build/outputs/apk/debug/plant-disease-mobile-debug.apk` for easier sharing. The build log prints the exact path.
 - To build a release APK: `cd mobile/android && ./gradlew assembleRelease` (configure signing first). The artifact will be under `app/build/outputs/apk/release/`.
+- After `assembleRelease`, a friendly copy is saved as `mobile/android/app/build/outputs/apk/release/plant-disease-mobile-release.apk`. This is the signed release you can distribute.
+- To generate a QR for a hosted APK URL: `pip install qrcode[pil]` then `python scripts/generate_apk_qr.py --url https://your-hosted-url/plant-disease-mobile-release.apk`.
 
 ---
 
