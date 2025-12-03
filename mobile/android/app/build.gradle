@@ -88,3 +88,20 @@ repositories {
     // Use local AAR produced from ExecuTorch build_android_library.sh
     flatDir { dirs "libs" }
 }
+
+// Print APK locations after assemble tasks to make discovery easier
+afterEvaluate {
+    ["Debug", "Release"].each { variant ->
+        tasks.matching { it.name == "assemble${variant}" }.configureEach {
+            doLast {
+                def apkDir = file("$buildDir/outputs/apk/${variant.toLowerCase()}")
+                def apks = fileTree(apkDir).matching { include "**/*.apk" }.files
+                if (apks.empty) {
+                    println "No APKs found in ${apkDir}"
+                } else {
+                    apks.each { println "APK artifact: ${it}" }
+                }
+            }
+        }
+    }
+}
