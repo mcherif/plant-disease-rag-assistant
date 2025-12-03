@@ -138,6 +138,13 @@ streamlit run src/interface/streamlit_app.py
 - See `docs/mobile_executorch.md` for export steps, desktop validation, and Android integration notes.
 - See `docs/mobile_android_app.md` for a minimal on-device demo app (Compose UI, ExecuTorch).
 
+### Mobile FP32 (ExecuTorch + XNNPACK)
+
+- Working FP32 export + runtime stack (nightly 20251025): torch 2.10.0.dev20251025+cpu, executorch 1.1.0.dev20251025+cpu (see `docs/mobile_env_fp32.txt`).
+- Export command: `python mobile/scripts/export_executorch_vit.py --no-quantize --output mobile/assets/vit_fp32_executorch.pte`
+- The export script now always lowers with the XNNPACK delegate for speed; on-device runs take ~1–2s on the olive test image.
+- Lessons and pitfalls recorded in `docs/mobile_learnings.md` (stack alignment, forced tensor removal, build/install steps).
+
 ---
 
 ## 🐳 Docker Deployment
