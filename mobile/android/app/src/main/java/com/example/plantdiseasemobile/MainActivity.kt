@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.TakePicturePreview
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -58,6 +59,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import android.util.Log
 import com.example.plantdiseasemobile.R
+import kotlin.math.min
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +83,22 @@ fun DemoScreen() {
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = TakePicturePreview()
+    ) { bmp: Bitmap? ->
+        bmp?.let {
+            val cropped = centerCrop(it)
+            isLoading = true
+            scope.launch {
+                val prediction = classifier.predict(cropped)
+                withContext(Dispatchers.Main) {
+                    state = state.copy(preview = cropped, prediction = prediction)
+                    isLoading = false
+                }
+            }
+        }
+    }
+
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -91,11 +109,12 @@ fun DemoScreen() {
                 return@let
             }
 
+            val cropped = centerCrop(bmp)
             isLoading = true
             scope.launch {
-                val prediction = classifier.predict(bmp)
+                val prediction = classifier.predict(cropped)
                 withContext(Dispatchers.Main) {
-                    state = state.copy(preview = bmp, prediction = prediction)
+                    state = state.copy(preview = cropped, prediction = prediction)
                     isLoading = false
                 }
             }
@@ -172,15 +191,30 @@ fun DemoScreen() {
                     )
                 }
             }
-            Button(
-                onClick = { pickImageLauncher.launch("image/*") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A085))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(if (isLoading) "Running..." else "Pick an image", color = Color.White)
+                Button(
+                    onClick = { cameraLauncher.launch(null) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp),
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E8575))
+                ) {
+                    Text(if (isLoading) "Running..." else "Capture", color = Color.White)
+                }
+                Button(
+                    onClick = { pickImageLauncher.launch("image/*") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp),
+                    enabled = !isLoading,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A085))
+                ) {
+                    Text(if (isLoading) "Running..." else "Pick an image", color = Color.White)
+                }
             }
             state.preview?.let { bmp ->
                 Image(
@@ -252,3 +286,11 @@ private fun uriToBitmap(context: android.content.Context, uri: Uri) =
             Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
         }
     }.getOrNull()
+
+private fun centerCrop(bitmap: Bitmap, scale: Float = 0.8f): Bitmap {
+    val side = (min(bitmap.width, bitmap.height) * scale).toInt().coerceAtLeast(1)
+    val x = ((bitmap.width - side) / 2f).toInt().coerceAtLeast(0)
+    val y = ((bitmap.height - side) / 2f).toInt().coerceAtLeast(0)
+    val safeSide = min(side, min(bitmap.width - x, bitmap.height - y))
+    return Bitmap.createBitmap(bitmap, x, y, safeSide, safeSide)
+}
