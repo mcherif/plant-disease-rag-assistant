@@ -145,6 +145,17 @@ streamlit run src/interface/streamlit_app.py
 - The export script now always lowers with the XNNPACK delegate for speed; on-device runs take ~1–2s on the olive test image.
 - Lessons and pitfalls recorded in `docs/mobile_learnings.md` (stack alignment, forced tensor removal, build/install steps).
 
+### Install the Android APK via adb
+
+```bash
+# From repo root
+adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+If you are on Windows PowerShell:
+```powershell
+& "$Env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r "mobile/android/app/build/outputs/apk/debug/app-debug.apk"
+```
+
 ---
 
 ## 🐳 Docker Deployment

@@ -12,12 +12,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -35,11 +40,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.plantdiseasemobile.ui.theme.PlantDiseaseTheme
+import androidx.exifinterface.media.ExifInterface
+import android.graphics.Bitmap
+import android.graphics.Matrix
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.InputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import android.util.Log
+import com.example.plantdiseasemobile.R
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,15 +78,26 @@ fun DemoScreen() {
     val labels = remember { loadLabels(context) }
     val classifier = remember { ViTClassifier(context, labels = labels) }
     var state by remember { mutableStateOf(UiState()) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             val bmp = uriToBitmap(context, it)
-            if (bmp != null) {
-                val (label, score) = classifier.predict(bmp)
-                state = state.copy(preview = bmp, prediction = label to score)
+            if (bmp == null) {
+                Log.e("MainActivity", "uriToBitmap returned null for $uri")
+                return@let
+            }
+
+            isLoading = true
+            scope.launch {
+                val prediction = classifier.predict(bmp)
+                withContext(Dispatchers.Main) {
+                    state = state.copy(preview = bmp, prediction = prediction)
+                    isLoading = false
+                }
             }
         }
     }
@@ -83,7 +112,16 @@ fun DemoScreen() {
             .background(gradient)
             .padding(24.dp)
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = 0.11f }
+        )
         Column(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -97,14 +135,52 @@ fun DemoScreen() {
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFFE6F2EF)
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                AssistChip(
+                    onClick = {},
+                    label = { Text("On-device ExecuTorch", color = Color.White) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = Color.White.copy(alpha = 0.08f)
+                    )
+                )
+                AssistChip(
+                    onClick = {},
+                    label = { Text("15 crops · 41 diseases", color = Color.White) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = Color.White.copy(alpha = 0.08f)
+                    )
+                )
+            }
+            Surface(
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "Supported crops",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                    Text(
+                        "Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato, Pepper, Olive",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFDDEFEA)
+                    )
+                }
+            }
             Button(
                 onClick = { pickImageLauncher.launch("image/*") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
+                enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A085))
             ) {
-                Text("Pick an image", color = Color.White)
+                Text(if (isLoading) "Running..." else "Pick an image", color = Color.White)
             }
             state.preview?.let { bmp ->
                 Image(
@@ -150,5 +226,29 @@ private fun loadLabels(context: android.content.Context): List<String> {
 private fun uriToBitmap(context: android.content.Context, uri: Uri) =
     runCatching {
         val stream: InputStream? = context.contentResolver.openInputStream(uri)
-        stream.use { BitmapFactory.decodeStream(it) }
+        stream.use { input ->
+            if (input == null) return@runCatching null
+            // Read into buffer so we can inspect EXIF and decode once
+            val buffer = ByteArrayOutputStream()
+            input.copyTo(buffer)
+            val bytes = buffer.toByteArray()
+
+            val exif = ExifInterface(ByteArrayInputStream(bytes))
+            val orientation = exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return@runCatching null
+            val matrix = Matrix()
+            when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.preScale(-1f, 1f)
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.preScale(1f, -1f)
+                else -> { /* no-op */ }
+            }
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        }
     }.getOrNull()

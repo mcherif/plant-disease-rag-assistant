@@ -1,28 +1,80 @@
 """
-ExecuTorch export using PT2E quantization and XNNPACK delegate.
-Improvements over export_executorch_vit.py:
-- Prefer qnnpack backend when available (fallback to fbgemm/first backend).
-- Deterministic dummy calibration image (seeded).
-- Reuse first torch.export result for quantization, then export quantized module once.
+ExecuTorch export using PT2E INT8 + XNNPACK delegate.
+- Prefers qnnpack backend.
+- Calibrates on real images (configurable) for better accuracy.
+- Reuses torch.export once for quantized module, then lowers with XNNPACK.
 """
 
+import argparse
+import sys
+import types
+from enum import Enum
 import time
 from pathlib import Path
 
 import numpy as np
 import torch
 from PIL import Image
-from transformers import ViTForImageClassification, ViTImageProcessor
-
-from executorch.exir import EdgeCompileConfig, to_edge_transform_and_lower
 from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
     XnnpackPartitioner,
 )
+from executorch.exir import to_edge_transform_and_lower
+from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.xnnpack_quantizer import (
     XNNPACKQuantizer,
     get_symmetric_quantization_config,
 )
-from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
+from transformers import ViTForImageClassification, ViTImageProcessor
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--calib-dir",
+    type=str,
+    default="data/split/train",
+    help="Directory with calibration JPGs.",
+)
+parser.add_argument(
+    "--calib-samples",
+    type=int,
+    default=512,
+    help="Number of calibration images to run observers on.",
+)
+parser.add_argument(
+    "--output",
+    type=str,
+    default="mobile/assets/vit_int8_executorch_qnnpack.pte",
+    help="Output .pte path.",
+)
+args = parser.parse_args()
+
+# Avoid torchvision custom op registration (e.g., NMS) when using CPU-only builds
+# by providing a minimal stub so transformers can import InterpolationMode.
+
+
+class _InterpolationMode(Enum):
+    NEAREST = 0
+    BILINEAR = 2
+    BICUBIC = 3
+    LANCZOS = 1
+    HAMMING = 5
+    BOX = 4
+
+
+_tv = types.ModuleType("torchvision")
+_tv_transforms = types.ModuleType("torchvision.transforms")
+_tv_transforms.InterpolationMode = _InterpolationMode
+try:
+    import importlib.machinery as _machinery
+
+    _tv.__spec__ = _machinery.ModuleSpec("torchvision", loader=None)
+    _tv_transforms.__spec__ = _machinery.ModuleSpec(
+        "torchvision.transforms", loader=None
+    )
+except Exception:
+    pass
+sys.modules["torchvision"] = _tv
+sys.modules["torchvision.transforms"] = _tv_transforms
+
 
 # Set quantization backend with preference for qnnpack on mobile.
 engines = list(torch.backends.quantized.supported_engines)
@@ -36,7 +88,7 @@ else:
     torch.backends.quantized.engine = engines[0]
 
 model_dir = Path("models/vit-finetuned")
-output_path = Path("mobile/assets/vit_int8_executorch_qnnpack.pte")
+output_path = Path(args.output)
 
 print("=" * 70)
 print("ExecuTorch Export with PT2E Quantization (QNNPACK preferred)")
@@ -71,8 +123,24 @@ quantizer.set_global(get_symmetric_quantization_config())
 training_gm = edge.module()
 start = time.perf_counter()
 prepared = prepare_pt2e(training_gm, quantizer)
-with torch.no_grad():
-    prepared(dummy)  # calibration
+
+# Calibration on real images if available
+calib_dir = Path(args.calib_dir)
+calib_images = []
+if calib_dir.exists():
+    calib_images = list(calib_dir.rglob("*.JPG"))[: args.calib_samples]
+if calib_images:
+    print(f"Calibrating with {len(calib_images)} images from {calib_dir}...")
+    with torch.no_grad():
+        for p in calib_images:
+            img = Image.open(p).convert("RGB")
+            t = processor(images=img, return_tensors="pt")["pixel_values"]
+            prepared(t)  # per-image to avoid batch shape mismatch
+else:
+    print("No calibration images found; using dummy for calibration.")
+    with torch.no_grad():
+        prepared(dummy)
+
 quantized = convert_pt2e(prepared)
 quant_time = time.perf_counter() - start
 print(f"PT2E quantization complete in {quant_time:.1f}s")
@@ -80,13 +148,10 @@ print(f"PT2E quantization complete in {quant_time:.1f}s")
 print("\nStep 4: Export quantized module and lower to ExecuTorch with XNNPACK")
 start = time.perf_counter()
 quant_export = torch.export.export(quantized, (dummy,), {})
-
-compile_config = EdgeCompileConfig(delegates=[XnnpackPartitioner()])
 et_program = to_edge_transform_and_lower(
     quant_export,
-    compile_config=compile_config,
+    partitioner=[XnnpackPartitioner()],
 ).to_executorch()
-
 lower_time = time.perf_counter() - start
 
 output_path.parent.mkdir(parents=True, exist_ok=True)
